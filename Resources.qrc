@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/images"/>
+    <qresource prefix="/gifs">
+        <file>Temp/GenshinStart.gif</file>
+    </qresource>
+</RCC>

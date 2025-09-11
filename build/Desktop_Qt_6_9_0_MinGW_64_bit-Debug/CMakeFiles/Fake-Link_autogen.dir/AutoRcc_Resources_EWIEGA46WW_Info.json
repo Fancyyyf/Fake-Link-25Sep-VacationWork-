@@ -1,0 +1,22 @@
+{
+	"BUILD_DIR" : "H:/QtVault/Fake-Link/build/Desktop_Qt_6_9_0_MinGW_64_bit-Debug/Fake-Link_autogen",
+	"CMAKE_BINARY_DIR" : "H:/QtVault/Fake-Link/build/Desktop_Qt_6_9_0_MinGW_64_bit-Debug",
+	"CMAKE_CURRENT_BINARY_DIR" : "H:/QtVault/Fake-Link/build/Desktop_Qt_6_9_0_MinGW_64_bit-Debug",
+	"CMAKE_CURRENT_SOURCE_DIR" : "H:/QtVault/Fake-Link",
+	"CMAKE_SOURCE_DIR" : "H:/QtVault/Fake-Link",
+	"CROSS_CONFIG" : false,
+	"GENERATOR" : "Ninja",
+	"INCLUDE_DIR" : "H:/QtVault/Fake-Link/build/Desktop_Qt_6_9_0_MinGW_64_bit-Debug/Fake-Link_autogen/include",
+	"INPUTS" : [ "H:/QtVault/Fake-Link/Temp/GenshinStart.gif" ],
+	"LOCK_FILE" : "H:/QtVault/Fake-Link/build/Desktop_Qt_6_9_0_MinGW_64_bit-Debug/CMakeFiles/Fake-Link_autogen.dir/AutoRcc_Resources_EWIEGA46WW_Lock.lock",
+	"MULTI_CONFIG" : false,
+	"OPTIONS" : [ "--no-zstd", "-name", "Resources" ],
+	"OUTPUT_CHECKSUM" : "EWIEGA46WW",
+	"OUTPUT_NAME" : "qrc_Resources.cpp",
+	"RCC_EXECUTABLE" : "F:/Qt/6.9.0/mingw_64/bin/rcc.exe",
+	"RCC_LIST_OPTIONS" : [ "--list" ],
+	"SETTINGS_FILE" : "H:/QtVault/Fake-Link/build/Desktop_Qt_6_9_0_MinGW_64_bit-Debug/CMakeFiles/Fake-Link_autogen.dir/AutoRcc_Resources_EWIEGA46WW_Used.txt",
+	"SOURCE" : "H:/QtVault/Fake-Link/Resources.qrc",
+	"USE_BETTER_GRAPH" : true,
+	"VERBOSITY" : 0
+}
