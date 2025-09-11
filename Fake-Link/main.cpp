@@ -13,8 +13,8 @@
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-    MainWindow game;
-    playerUI prep;
+    MainWindow* game = new MainWindow;
+    playerUI* prep = new playerUI;
 
 //启动动画
     QMovie movie(":/gifs/Temp/GenshinStart.gif");
@@ -41,7 +41,18 @@ int main(int argc, char *argv[])
     label.close();
 //动画播放结束
 
-    prep.show();
+    prep->show();//调出开始界面
+
+    QObject::connect(prep, &playerUI::gameStart, [=]() {
+        prep->hide();
+        game->show();
+    });
+
+    QObject::connect(game, &MainWindow::backToPrep,[=](){
+        game->close();
+        prep->show();
+    });
+
 
     return a.exec();
 }

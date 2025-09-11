@@ -2,6 +2,11 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QKeyEvent>
+#include <QMessageBox>
+#include <QDebug>
+
+#include "pausedialog.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -16,6 +21,16 @@ class MainWindow : public QMainWindow
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
+
+signals:
+    void backToPrep();
+
+
+protected:
+    void keyPressEvent(QKeyEvent *event) override;
+
+private slots:
+    void gameContinue();
 
 private:
     Ui::MainWindow *ui;

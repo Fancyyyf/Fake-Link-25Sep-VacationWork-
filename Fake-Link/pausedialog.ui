@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>playerUI</class>
- <widget class="QWidget" name="playerUI">
+ <class>pauseDialog</class>
+ <widget class="QDialog" name="pauseDialog">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -11,32 +11,32 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string>Dialog</string>
   </property>
-  <widget class="QPushButton" name="gameStartButton">
+  <widget class="QPushButton" name="backRequestButton">
    <property name="geometry">
     <rect>
-     <x>70</x>
-     <y>180</y>
-     <width>91</width>
-     <height>41</height>
+     <x>180</x>
+     <y>50</y>
+     <width>111</width>
+     <height>61</height>
     </rect>
    </property>
    <property name="text">
-    <string>开始游戏</string>
+    <string>回到标题页面</string>
    </property>
   </widget>
-  <widget class="QPushButton" name="pushButton">
+  <widget class="QPushButton" name="backToGameButton">
    <property name="geometry">
     <rect>
-     <x>250</x>
-     <y>180</y>
-     <width>101</width>
-     <height>41</height>
+     <x>180</x>
+     <y>140</y>
+     <width>111</width>
+     <height>61</height>
     </rect>
    </property>
    <property name="text">
-    <string>退出游戏</string>
+    <string>继续游戏</string>
    </property>
   </widget>
  </widget>

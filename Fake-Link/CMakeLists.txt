@@ -25,6 +25,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         ${PROJECT_SOURCES}
         Resources.qrc
         playerui.h playerui.cpp playerui.ui
+        pausedialog.h pausedialog.cpp pausedialog.ui
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET Fake-Link APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR

@@ -13,8 +13,14 @@ playerUI::~playerUI()
     delete ui;
 }
 
+void playerUI::on_gameStartButton_clicked()
+{
+    emit gameStart();
+}
+
+
 void playerUI::on_pushButton_clicked()
 {
-
+    this->close();
 }
 

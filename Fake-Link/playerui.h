@@ -19,6 +19,8 @@ signals:
     void gameStart();//发出开始游戏的信号
 
 private slots:
+    void on_gameStartButton_clicked();
+
     void on_pushButton_clicked();
 
 private:
