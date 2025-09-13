@@ -1,5 +1,25 @@
 <RCC>
-    <qresource prefix="/images"/>
+    <qresource prefix="/images">
+        <file>Images/Background/bg1.png</file>
+        <file>Images/Background/bg2.png</file>
+        <file>Images/Background/bg3.png</file>
+        <file>Images/Background/bg4.png</file>
+        <file>Images/Background/bg5.png</file>
+        <file>Images/Background/bg6.png</file>
+        <file>Images/Background/pixbg1.png</file>
+        <file>Images/Background/pixbg2.png</file>
+        <file>Images/Background/pixbg3.png</file>
+        <file>Images/Background/pixbg4.png</file>
+        <file>Images/Background/pixbg5.png</file>
+        <file>Images/Background/pixbg6.png</file>
+        <file>Images/Blocks/box1.png</file>
+        <file>Images/Blocks/box2.png</file>
+        <file>Images/Blocks/box3.png</file>
+        <file>Images/Blocks/box4.png</file>
+        <file>Images/Blocks/box5.png</file>
+        <file>Images/Blocks/box6.png</file>
+        <file>Images/ui/Title.png</file>
+    </qresource>
     <qresource prefix="/gifs">
         <file>Temp/GenshinStart.gif</file>
     </qresource>
