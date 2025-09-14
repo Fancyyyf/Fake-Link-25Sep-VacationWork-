@@ -1,10 +1,13 @@
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
 
-MainWindow::MainWindow(QWidget *parent)
+MainWindow::MainWindow(QWidget *parent, int row, int col, int numTypes)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
-    , board(row, QVector<int>(col, 0))
+    , board(row, QVector<int>(col, 0)),
+    row(row),col(col),numTypes(numTypes),
+    firstClicked(false), secondClicked(false), match(false),
+    allZero(false)
 {
     ui->setupUi(this);
     srand((int)time(0));
@@ -23,6 +26,18 @@ MainWindow::MainWindow(QWidget *parent)
     boxImages.append(QPixmap(":/images/Images/Blocks/box6.png"));
 
     mapInit();
+
+    connect(this, &MainWindow::setChangeMainWindow, this, &MainWindow::setRecieved);
+
+    //初始化失败弹窗
+    // 创建提示 QLabel
+    tipLabel = new QLabel("配对失败！", this);
+    tipLabel->setStyleSheet("background-color: rgba(255,0,0,200); color: white; "
+                            "font-weight: bold; padding: 10px; border-radius: 5px;");
+    tipLabel->setAlignment(Qt::AlignCenter);
+    tipLabel->setFixedSize(120, 50);
+    tipLabel->move((width() - tipLabel->width()) / 2, (height() - tipLabel->height()) / 2);
+    tipLabel->hide();  // 初始隐藏
 }
 
 MainWindow::~MainWindow()
@@ -55,10 +70,35 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
     }
 }
 
+void MainWindow::mousePressEvent(QMouseEvent *event) {
+    // 鼠标像素坐标
+    QPointF pixel = event->position();
+    QPointF logic = pixelToLogical(pixel);
+    if(event->button() == Qt::LeftButton){
+        if (!std::isnan(logic.x())) {//是否有效坐标
+            int col = (int)std::floor(logic.x());
+            int row = (int)std::floor(logic.y()) + 1;// 点击边角会存在问题，点击图像本身即可修正
+            qDebug() << "logic:" << logic << " -> row,col =" << row << col;
+
+            linkStart(row, col);
+        } else {
+            qDebug() << "点击在绘制区域外";
+        }
+    }
+    if(event->button() == Qt::RightButton){//右键取消
+        if(firstClicked){
+            firstClicked = false;
+            selRow1 = selCol1 = -1;
+
+            update();
+        }
+    }
+}
+
 
 void MainWindow::mapInit(){
     if (numTypes < 3) numTypes = 3; // 至少 3 种
-    if (numTypes > 6) numTypes = 6; // 至多 8 种
+    if (numTypes > 6) numTypes = 6; // 至多 6 种
 
     int total = row * col;
     bool needEmpty = (total % 2 == 1);
@@ -108,7 +148,8 @@ void MainWindow::paintEvent(QPaintEvent *event)
 {
     Q_UNUSED(event);
     QPainter painter(this);
-    int cellSize = 80; // 每个格子的大小
+    painter.setRenderHint(QPainter::Antialiasing,true);//抗锯齿
+    int cellSize = 1; // 每个格子的大小
 
     //绘制背景
     painter.setOpacity(0.6);  // 设置透明度 0.0~1.0
@@ -116,6 +157,24 @@ void MainWindow::paintEvent(QPaintEvent *event)
     QPixmap bg(path);
     painter.drawPixmap(rect(), bg);
     painter.setOpacity(1);//透明度还原
+
+    //设置视口比例，防止地图变形
+    int heightSide, widthSide;
+    if (((double)(width())/(double)(height())) > ((double)(col) / (double)(row))) {
+        heightSide = height();
+        widthSide =  col * heightSide / row;
+    } else {
+        widthSide = width();
+        heightSide = row * widthSide / col;
+    }
+    painter.setViewport((width()-widthSide)/2,(height()-heightSide)/2,widthSide,heightSide);
+
+    //设置painter的坐标，方便画图
+    double marginRatio = 0.20; // 边距比例：2%
+    double widSpace = col * marginRatio;
+    double heiSpace = row * marginRatio;
+    painter.setWindow(-widSpace, -heiSpace, col+2*widSpace, row+2*heiSpace);
+    //让上方空格更大一些
 
     //纯色格子版本
     /*for (int r = 0; r < row; ++r) {
@@ -156,6 +215,138 @@ void MainWindow::paintEvent(QPaintEvent *event)
                 // 把图片缩放到格子大小再绘制
                 painter.drawPixmap(rect, boxImages[val - 1]);
             }
+
+            if (firstClicked && r == selRow1 && c == selCol1) {
+                QColor overlay(100, 100, 100, 120); // RGBA，alpha=120 半透明
+                painter.fillRect(rect, overlay);
+            }
+            if (secondClicked && r == selRow2 && c == selCol2) {
+                QColor overlay(100, 100, 100, 120); // RGBA，alpha=120 半透明
+                painter.fillRect(rect, overlay);
+            }
         }
     }
+
+    checkGameFinished();
+    if (allZero) {
+        QMessageBox::information(this, "胜利", "恭喜你，全部消除完成！");
+    }
+}
+
+
+QPointF MainWindow::pixelToLogical(const QPointF &pixel) const {
+    //设置视口比例，防止地图变形
+    int heightSide, widthSide;
+    if (((double)(width())/(double)(height())) > ((double)(col) / (double)(row))) {
+        heightSide = height();
+        widthSide =  col * heightSide / row;
+    } else {
+        widthSide = width();
+        heightSide = row * widthSide / col;
+    }
+    QRect viewport((width() - widthSide) / 2, (height() - heightSide) / 2, widthSide, heightSide);
+
+    double marginRatio = 0.20; // 边距比例：20%
+    double widSpace = col * marginRatio;
+    double heiSpace = row * marginRatio;
+    QRectF windowRect(-widSpace, -heiSpace, col + 2*widSpace, row + 2*heiSpace);
+
+    //如果点击不在 viewport 内，可选择忽略或裁剪
+    if (!viewport.contains(pixel.toPoint())) {
+        return QPointF(std::numeric_limits<double>::quiet_NaN(),
+                       std::numeric_limits<double>::quiet_NaN());
+    }//NaN = Not a Number（非数字），是 IEEE 754 浮点标准定义的一种特殊值
+     //quiet_NaN() 返回一个 安静的 NaN 值（不会触发异常/中断）
+
+
+    //线性映射 (像素 -> 归一化 -> 逻辑)
+    double nx = (pixel.x() - viewport.left()) / (double)viewport.width();
+    double ny = (pixel.y() - viewport.top())  / (double)viewport.height();
+
+    double logicX = windowRect.left() + nx * windowRect.width();
+    double logicY = windowRect.top()  + ny * windowRect.height();
+    return QPointF(logicX, logicY);
+
+    // 修正：去掉边距偏移
+    // double colIndex = (logicX + widSpace);     // 把左移的坐标拉回来
+    // double rowIndex = (logicY + 1.8*heiSpace); // 把上移的坐标拉回来
+    // return QPointF(colIndex, rowIndex);
+}
+
+void MainWindow::setRecieved(){
+    QSettings settings("config.txt", QSettings::IniFormat);//随程序发布统一配置
+
+    col = settings.value("block/col", 10).toInt();
+    row  = settings.value("block/row", 8).toInt();
+    numTypes = settings.value("block/numTypes", 3).toInt();
+
+    mapInit();
+}
+
+void MainWindow::linkStart(int r,int c){
+
+    if(r < 0 || r > row - 1 || c < 0 || c > col - 1 ) return;
+    if(board[r][c] == 0) return;
+
+    if(!firstClicked){//如果不存在已经选中的图标
+        selRow1 = r;
+        selCol1 = c;
+        firstClicked = true;
+
+        update();
+    }else{
+        if(secondClicked) return;
+        if(r == selRow1 && c == selCol1){//排除重复点击同一个的bug
+            firstClicked = false;
+            selRow1 = selCol1 = -1;
+            update();
+            return;
+        }
+        selRow2 = r;
+        selCol2 = c;
+        secondClicked = true;
+
+        update();
+
+        if(board[selRow1][selCol1] == board[selRow2][selCol2]){
+            match = true;//配对成功
+
+            update();
+
+            QTimer::singleShot(500, this, [this]() {
+                qDebug() << "1 second later";
+                // 这里可以执行延时后的操作，比如 update() 绘制
+
+                board[selRow1][selCol1] = board[selRow2][selCol2] = 0;
+                selRow1 = selCol1 = selRow2 = selCol2 = -1;
+                firstClicked = false;
+                secondClicked = false;
+                match = false;
+                update();
+            });
+        }else{
+            tipLabel->show();
+
+            QTimer::singleShot(1000, this, [this]() {
+                qDebug() << "1 second later";
+                // 这里可以执行延时后的操作，比如 update() 绘制
+
+                selRow1 = selCol1 = selRow2 = selCol2 = -1;
+                firstClicked = false;
+                secondClicked = false;
+                tipLabel->hide();
+                update();
+            });
+        }
+
+
+    }
+
+}
+
+
+void MainWindow::checkGameFinished(){
+    allZero = std::all_of(board.begin(), board.end(), [](const QVector<int>& row){
+        return std::all_of(row.begin(), row.end(), [](int val){ return val == 0; });
+    });
 }

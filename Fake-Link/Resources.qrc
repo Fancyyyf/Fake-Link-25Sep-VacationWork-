@@ -19,8 +19,26 @@
         <file>Images/Blocks/box5.png</file>
         <file>Images/Blocks/box6.png</file>
         <file>Images/ui/Title.png</file>
+        <file>Images/Icon/bg0.png</file>
+        <file>Images/Icon/ic1.png</file>
+        <file>Images/Icon/ic2.png</file>
+        <file>Images/Icon/ic3.png</file>
+        <file>Images/Icon/ic4.png</file>
+        <file>Images/Icon/ic5.png</file>
+        <file>Images/Icon/ic6.png</file>
+        <file>Images/Icon/ic7.png</file>
+        <file>Images/Icon/ic8.png</file>
+        <file>Images/Icon/ic9.png</file>
+        <file>Images/Icon/ic10.png</file>
+        <file>Images/Icon/ic11.png</file>
+        <file>Images/Icon/ic12.png</file>
+        <file>Images/Icon/ic13.png</file>
+        <file>Images/Icon/ic14.png</file>
     </qresource>
     <qresource prefix="/gifs">
         <file>Temp/GenshinStart.gif</file>
+    </qresource>
+    <qresource prefix="/ico">
+        <file>Images/ICO/ic5.ico</file>
     </qresource>
 </RCC>

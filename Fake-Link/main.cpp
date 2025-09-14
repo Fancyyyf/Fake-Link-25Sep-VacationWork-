@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "playerui.h"
+#include "gameSettings.h"
 
 #include <QApplication>
 #include <QApplication>
@@ -13,8 +14,11 @@
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-    MainWindow* game = new MainWindow;
     playerUI* prep = new playerUI;
+
+    gameSettings gset = prep->preSets();
+    MainWindow* game = new MainWindow(nullptr, gset.row, gset.col, gset.numTypes);
+
 
 //启动动画
     QMovie movie(":/gifs/Temp/GenshinStart.gif");
@@ -43,6 +47,7 @@ int main(int argc, char *argv[])
 
     prep->show();//调出开始界面
 
+    QObject::connect(prep, &playerUI::setChangePlayerUI, game, &MainWindow::setChangeMainWindow);
     QObject::connect(prep, &playerUI::gameStart, [=]() {
         prep->hide();
         game->show();
