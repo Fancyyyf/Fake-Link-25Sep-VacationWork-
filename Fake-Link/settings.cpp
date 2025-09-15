@@ -13,6 +13,7 @@ Settings::Settings(QWidget *parent)
     gset.col = settings.value("block/col", 10).toInt();
     gset.row  = settings.value("block/row", 8).toInt();
     gset.numTypes = settings.value("block/numTypes", 3).toInt();
+    gset.character = settings.value("checkBox/character", false).toBool();
 
     ui->colEdit->setText(QString::number(gset.col));
     ui->colEdit->setPlaceholderText("请输入列数");
@@ -20,6 +21,15 @@ Settings::Settings(QWidget *parent)
     ui->rowEdit->setPlaceholderText("请输入行数");
     ui->numTypeEdit->setText(QString::number(gset.numTypes));
     ui->numTypeEdit->setPlaceholderText("请输入格子种类");
+
+    ui->characterBox->setChecked(gset.character);
+
+
+    connect(ui->characterBox, &QCheckBox::toggled, this, [=](bool checked){
+        gset.character = checked;  // 每次点击都会更新
+        qDebug() << "当前 isBoxChecked =" << gset.character;
+    });
+
 }
 
 Settings::~Settings()
@@ -39,6 +49,8 @@ void Settings::saveSets(){
     settings.setValue("block/col", pcol);
     settings.setValue("block/row", prow);
     settings.setValue("block/numTypes", pnumTypes);
+
+    settings.setValue("checkBox/character", gset.character);
 
 }
 

@@ -34,6 +34,8 @@
         <file>Images/Icon/ic12.png</file>
         <file>Images/Icon/ic13.png</file>
         <file>Images/Icon/ic14.png</file>
+        <file>Images/Icon/quitIcon.png</file>
+        <file>Images/Background/startBG.png</file>
     </qresource>
     <qresource prefix="/gifs">
         <file>Temp/GenshinStart.gif</file>

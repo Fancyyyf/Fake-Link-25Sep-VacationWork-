@@ -5,6 +5,8 @@
 #include <QSettings>
 #include <QString>
 #include <QPoint>
+#include <QPaintEvent>
+#include <QPainter>
 
 #include "settings.h"
 
@@ -33,6 +35,12 @@ private slots:
     void on_pushButton_clicked();
 
     void on_setButton_clicked();
+
+    void on_refreshButton_clicked();
+
+
+protected:
+    void paintEvent(QPaintEvent* event) override;
 
 private:
     Ui::playerUI *ui;

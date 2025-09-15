@@ -11,6 +11,12 @@ playerUI::playerUI(QWidget *parent)
 
     s = new Settings;
     connect(s, &Settings::setUpdated, this, &playerUI::setChangePlayerUI);
+
+    QPixmap pixmap(":/images/Images/ui/Title.png");
+    ui->titleLabel->setPixmap(pixmap);
+    ui->titleLabel->setScaledContents(true);  // 图片自适应 label 大小
+    ui->titleLabel->setFixedSize(231,97);
+
 }
 
 playerUI::~playerUI()
@@ -36,8 +42,9 @@ gameSettings playerUI::preSets(){
     gset.col = settings.value("block/col", 10).toInt();
     gset.row  = settings.value("block/row", 8).toInt();
     gset.numTypes = settings.value("block/numTypes", 3).toInt();
+    gset.character = settings.value("checkBox/character", false).toBool();
 
-    //qDebug() << gset.numTypes;
+    //qDebug() << gset.character;
     return gset;
 }
 
@@ -49,3 +56,17 @@ void playerUI::on_setButton_clicked()
     }
 }
 
+
+void playerUI::on_refreshButton_clicked()
+{
+    emit setChangePlayerUI();
+}
+
+
+void playerUI::paintEvent(QPaintEvent* event){
+    QPainter painter(this);
+
+    // 或绘制图片背景
+    QPixmap pix(":/images/Images/Background/startBG.png");
+    painter.drawPixmap(this->rect(), pix);
+}

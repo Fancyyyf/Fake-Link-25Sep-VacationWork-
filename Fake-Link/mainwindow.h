@@ -13,6 +13,12 @@
 #include <QPointF>
 #include <QSettings>
 #include <QTimer>
+#include <QTransform>
+#include <deque>
+#include <tuple>
+#include <array>
+#include <climits>
+#include <QtGlobal>   // qRound
 
 #include "pausedialog.h"
 
@@ -27,7 +33,8 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    MainWindow(QWidget *parent = nullptr, int row = 8, int col = 10, int numTypes = 3);
+    MainWindow(QWidget *parent = nullptr, int row = 8, int col = 10, int numTypes = 3
+               , bool character = false, int maxTurns = 3);
     ~MainWindow();
 
 signals:
@@ -45,11 +52,24 @@ protected:
 
     void paintEvent(QPaintEvent *event) override; // 绘制地图
 
+    QTransform computeLogicalToDeviceTransform() const;
+
     QPointF pixelToLogical(const QPointF &pixel) const;//坐标变换
 
     void linkStart(int row,int col);//开始配对
 
     void checkGameFinished();
+
+    //寻路函数
+
+    QVector<QPoint> findLinkPath(
+        const QPoint &a, const QPoint &b,
+        const QVector<QVector<int>> &map,
+        int maxTurns,
+        const QTransform &logicalToScene
+        );
+
+
 
 
 private slots:
@@ -57,6 +77,7 @@ private slots:
 
     void setRecieved();//接收设置改变的信号
 
+    void on_quitButton_clicked();
 
 private:
     Ui::MainWindow *ui;
@@ -78,8 +99,15 @@ private:
 
     QLabel *tipLabel;//配对失败提示
 
+    bool characterSet;//判断采用角色还是鼠标
 
-    bool allZero;//判断游戏结束
+    bool success;//判断游戏结束
+    bool portal;//一键通关的后门
+
+    //拐点限制
+    int maxTurns;
+
+    QVector<QPoint> path;
 };
 
 

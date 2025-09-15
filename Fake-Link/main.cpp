@@ -17,7 +17,7 @@ int main(int argc, char *argv[])
     playerUI* prep = new playerUI;
 
     gameSettings gset = prep->preSets();
-    MainWindow* game = new MainWindow(nullptr, gset.row, gset.col, gset.numTypes);
+    MainWindow* game = new MainWindow(nullptr, gset.row, gset.col, gset.numTypes, gset.character);
 
 
 //启动动画
@@ -57,7 +57,6 @@ int main(int argc, char *argv[])
         game->close();
         prep->show();
     });
-
 
     return a.exec();
 }

@@ -17,7 +17,7 @@
    <property name="geometry">
     <rect>
      <x>70</x>
-     <y>230</y>
+     <y>250</y>
      <width>56</width>
      <height>18</height>
     </rect>
@@ -29,8 +29,8 @@
   <widget class="QPushButton" name="saveButton">
    <property name="geometry">
     <rect>
-     <x>230</x>
-     <y>230</y>
+     <x>240</x>
+     <y>250</y>
      <width>56</width>
      <height>18</height>
     </rect>
@@ -106,6 +106,19 @@
    </property>
    <property name="text">
     <string>格子种类(numTypes)：</string>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="characterBox">
+   <property name="geometry">
+    <rect>
+     <x>130</x>
+     <y>190</y>
+     <width>141</width>
+     <height>41</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>是否使用RPG角色</string>
    </property>
   </widget>
  </widget>
