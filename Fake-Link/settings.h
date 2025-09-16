@@ -6,6 +6,9 @@
 #include <QString>
 #include <QPoint>
 #include <QMessageBox>
+#include <QPaintEvent>
+#include <QPainter>
+#include <QKeyEvent>
 
 #include "gameSettings.h"
 
@@ -22,6 +25,11 @@ public:
     ~Settings();
 
     void saveSets();
+
+protected:
+    void paintEvent(QPaintEvent* event) override;
+
+    void keyPressEvent(QKeyEvent* event) override;
 
 signals:
     void setUpdated();

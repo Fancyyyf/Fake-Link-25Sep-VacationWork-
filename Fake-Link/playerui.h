@@ -7,6 +7,7 @@
 #include <QPoint>
 #include <QPaintEvent>
 #include <QPainter>
+#include <QKeyEvent>
 
 #include "settings.h"
 
@@ -41,6 +42,8 @@ private slots:
 
 protected:
     void paintEvent(QPaintEvent* event) override;
+
+    void keyPressEvent(QKeyEvent* event) override;
 
 private:
     Ui::playerUI *ui;

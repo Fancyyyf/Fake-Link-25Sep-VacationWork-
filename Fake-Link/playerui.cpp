@@ -60,6 +60,7 @@ void playerUI::on_setButton_clicked()
 void playerUI::on_refreshButton_clicked()
 {
     emit setChangePlayerUI();
+    QMessageBox::information(this, "提示", "刷新成功！");
 }
 
 
@@ -69,4 +70,10 @@ void playerUI::paintEvent(QPaintEvent* event){
     // 或绘制图片背景
     QPixmap pix(":/images/Images/Background/startBG.png");
     painter.drawPixmap(this->rect(), pix);
+}
+
+void playerUI::keyPressEvent(QKeyEvent* event){
+    if ((event->modifiers() == Qt::ControlModifier) && event->key() == Qt::Key_R) {
+        ui->refreshButton->clicked();
+    }
 }

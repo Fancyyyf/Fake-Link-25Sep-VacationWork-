@@ -77,8 +77,6 @@ private slots:
 
     void setRecieved();//接收设置改变的信号
 
-    void on_quitButton_clicked();
-
 private:
     Ui::MainWindow *ui;
     int backgroundNum = 0;//第几张地图

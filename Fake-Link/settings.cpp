@@ -6,6 +6,7 @@ Settings::Settings(QWidget *parent)
     , ui(new Ui::Settings)
 {
     ui->setupUi(this);
+    this->setWindowIcon(QIcon(":/images/Images/Icon/setIcon.png"));
 
     //界面设置
     QSettings settings("config.txt", QSettings::IniFormat);//随程序发布统一配置
@@ -73,5 +74,21 @@ void Settings::on_saveButton_clicked()
 void Settings::on_quitButton_clicked()
 {
     this->close();
+}
+
+
+void Settings::paintEvent(QPaintEvent* event){
+    QPainter painter(this);
+
+    // 或绘制图片背景
+    QPixmap pix(":/images/Images/Background/setBG.png");
+    painter.drawPixmap(this->rect(), pix);
+}
+
+
+void Settings::keyPressEvent(QKeyEvent* event){
+    if (event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter) {
+        ui->saveButton->clicked();  // 模拟点击
+    }
 }
 

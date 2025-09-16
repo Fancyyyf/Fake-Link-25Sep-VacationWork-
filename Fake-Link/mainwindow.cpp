@@ -17,6 +17,7 @@ MainWindow::MainWindow(QWidget *parent, int row, int col, int numTypes
     ui->setupUi(this);
     srand((int)time(0));
     this->resize(1600, 900);
+    this->setWindowIcon(QIcon(":/images/Images/Icon/mainWIndowIcon.png"));
 
     backgroundNum  = std::rand()%6;
 
@@ -51,6 +52,11 @@ MainWindow::MainWindow(QWidget *parent, int row, int col, int numTypes
     tipLabel->move((width() - tipLabel->width()) / 2, (height() - tipLabel->height()) / 2);
     tipLabel->hide();  // 初始隐藏
 
+    connect(ui->quitButton, &QPushButton::clicked, this, [this]() {
+        // 构造一个 Key_A 的事件
+        QKeyEvent event(QEvent::KeyPress, Qt::Key_Escape, Qt::NoModifier);
+        QCoreApplication::sendEvent(this, &event);
+    });
 }
 
 MainWindow::~MainWindow()
@@ -388,9 +394,9 @@ void MainWindow::linkStart(int r,int c){
         QPoint b(selRow2,selCol2);
         QTransform t = computeLogicalToDeviceTransform();
 
-        path = findLinkPath(a ,b ,board ,maxTurns, t);//寻路算法依然有问题
-
-        if(!path.isEmpty()){
+        //path = findLinkPath(a ,b ,board ,maxTurns, t);//寻路算法依然有问题
+        // !path.isEmpty()
+        if(board[selRow1][selCol1] == board[selRow2][selCol2]){
 
             match = true;//配对成功
 
@@ -457,23 +463,6 @@ void MainWindow::checkGameFinished(){
             mapInit();
         }
     }
-}
-
-void MainWindow::on_quitButton_clicked()
-{
-    QMessageBox::StandardButton reply;
-    reply = QMessageBox::question(this,
-                                  "是否退出",
-                                  "退出前请确保存档！",
-                                  QMessageBox::Yes | QMessageBox::No);
-
-    if (reply == QMessageBox::Yes) {
-        emit backToPrep();
-        qDebug() << "用户选择了 Yes";
-    } else {
-        qDebug() << "用户选择了 No";
-    }
-
 }
 
 

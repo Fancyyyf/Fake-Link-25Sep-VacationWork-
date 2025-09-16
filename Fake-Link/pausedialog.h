@@ -3,6 +3,10 @@
 
 #include <QDialog>
 #include <QLabel>
+#include <QMessageBox>
+#include <QPaintEvent>
+#include <QPainter>
+
 
 namespace Ui {
 class pauseDialog;
@@ -19,6 +23,9 @@ public:
 signals:
     void requestBackToPrep(); // 请求返回准备界面
     void backToGame();
+
+protected:
+    void paintEvent(QPaintEvent* event) override;
 
 private slots:
     void on_backRequestButton_clicked();

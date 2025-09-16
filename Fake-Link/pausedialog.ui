@@ -16,10 +16,10 @@
   <widget class="QPushButton" name="backRequestButton">
    <property name="geometry">
     <rect>
-     <x>180</x>
-     <y>50</y>
-     <width>111</width>
-     <height>61</height>
+     <x>0</x>
+     <y>90</y>
+     <width>91</width>
+     <height>51</height>
     </rect>
    </property>
    <property name="text">
@@ -29,10 +29,10 @@
   <widget class="QPushButton" name="backToGameButton">
    <property name="geometry">
     <rect>
-     <x>180</x>
-     <y>140</y>
-     <width>111</width>
-     <height>61</height>
+     <x>0</x>
+     <y>150</y>
+     <width>91</width>
+     <height>51</height>
     </rect>
    </property>
    <property name="text">
