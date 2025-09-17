@@ -14,6 +14,8 @@ MainWindow::MainWindow(QWidget *parent, int row, int col, int numTypes
 {
     //qDebug() << characterSet;
 
+    setProtection();
+
     ui->setupUi(this);
     srand((int)time(0));
     this->resize(1600, 900);
@@ -127,7 +129,7 @@ void MainWindow::mousePressEvent(QMouseEvent *event) {
 
 
 void MainWindow::mapInit(){
-    if (numTypes < 3) numTypes = 3; // 至少 3 种
+    if (numTypes < 2) numTypes = 2; // 至少 3 种
     if (numTypes > 6) numTypes = 6; // 至多 6 种
 
     int total = row * col;
@@ -170,6 +172,7 @@ void MainWindow::mapInit(){
         }
     }
 
+    path.clear();
     update();
 }
 
@@ -183,8 +186,8 @@ void MainWindow::paintEvent(QPaintEvent *event)
 
     //绘制背景
     painter.setOpacity(0.6);  // 设置透明度 0.0~1.0
-    QString path = QString(":/images/Images/Background/pixbg") + QString::number(1 + backgroundNum)+ QString(".png");
-    QPixmap bg(path);
+    QString pathPix = QString(":/images/Images/Background/pixbg") + QString::number(1 + backgroundNum)+ QString(".png");
+    QPixmap bg(pathPix);
     painter.drawPixmap(rect(), bg);
     painter.setOpacity(1);//透明度还原
 
@@ -265,17 +268,49 @@ void MainWindow::paintEvent(QPaintEvent *event)
         }
     }
 
+
+
+    if(!path.isEmpty()){
+        qDebug() << "draw";
+
+        //QPoint只能整数坐标，于是更新QPointF方便绘画
+        QVector<QPointF> drawPath;
+        drawPath.reserve(path.size());
+
+        for (const auto &pt : path) {
+            drawPath.append(QPointF(pt.x() + 0.5, pt.y() + 0.5));
+        }//修改路径，使画笔处在图标中心
+
+        QPainterPath pathLine;
+        pathLine.moveTo(drawPath[0]);
+        for (int i = 1; i < drawPath.size(); ++i) {
+            pathLine.lineTo(drawPath[i]);
+        }
+
+        QLinearGradient grad(drawPath[0], drawPath[drawPath.size()-1]);
+        grad.setColorAt(0, QColor(75, 0, 130, 200));//紫色
+        grad.setColorAt(1, QColor(255, 215, 0, 200));//金色
+        //屏幕/计算机 → RGB（三基色是红绿蓝，加色模式）,故QColor采用RGB
+        //绘画/颜料 → RYB（三基色是红黄蓝，减色模式）
+
+        QPen pen(QBrush(grad), 0.1);
+        pen.setCapStyle(Qt::RoundCap);    // 圆头
+        pen.setJoinStyle(Qt::RoundJoin);  // 圆角
+        painter.setPen(pen);
+
+        painter.drawPath(pathLine);
+
+        checkGameFinished();
+    }
+
+
     painter.restore();//恢复到坐标变换前
-
-    checkGameFinished();
-
 }
 
 
 QTransform MainWindow::computeLogicalToDeviceTransform() const {
     QRect viewport;
     QRectF windowRect;
-
 
     int heightSide, widthSide;
     if ((double)width() / (double)height() > (double)(col + 2) / (double)(row + 2)) {
@@ -361,9 +396,25 @@ void MainWindow::setRecieved(){
     row  = settings.value("block/row", 8).toInt();
     numTypes = settings.value("block/numTypes", 3).toInt();
     characterSet = settings.value("checkBox/character", false).toBool();
+    maxTurns = settings.value("block/maxTurns", 3).toInt();
 
+    setProtection();
+
+    qDebug() << maxTurns;
     mapInit();
 }
+
+
+void MainWindow::setProtection(){
+    if(maxTurns < 1 ) maxTurns = 1;
+    if(row > 20) row = 20;
+    if(col > 20) col = 20;
+    if(row < 2) row = 2;
+    if(col < 2) col = 2;
+    if(numTypes > 6) numTypes = 6;
+    if(numTypes < 2) numTypes = 2;
+}
+
 
 void MainWindow::linkStart(int r,int c){
 
@@ -390,13 +441,15 @@ void MainWindow::linkStart(int r,int c){
 
         update();
 
-        QPoint a(selRow1,selCol1);
-        QPoint b(selRow2,selCol2);
-        QTransform t = computeLogicalToDeviceTransform();
+        QPoint a(selCol1,selRow1);
+        QPoint b(selCol2,selRow2);
 
-        //path = findLinkPath(a ,b ,board ,maxTurns, t);//寻路算法依然有问题
+        path = findLinkPath(a ,b ,board ,maxTurns);//寻路算法依然有问题
         // !path.isEmpty()
-        if(board[selRow1][selCol1] == board[selRow2][selCol2]){
+        //board[selRow1][selCol1] == board[selRow2][selCol2]
+
+        qDebug() << path;
+        if(!path.isEmpty()){
 
             match = true;//配对成功
 
@@ -426,6 +479,8 @@ void MainWindow::linkStart(int r,int c){
                 firstClicked = false;
                 secondClicked = false;
                 tipLabel->hide();
+
+                path.clear();
                 update();
             });
         }
@@ -465,7 +520,7 @@ void MainWindow::checkGameFinished(){
     }
 }
 
-
+constexpr int DIR_START = 5;
 //寻路函数，采用0-1 BFS搜索
 
 /**
@@ -477,53 +532,55 @@ void MainWindow::checkGameFinished(){
  *  - 拐点个数 <= maxTurns
  *  - 初始方向不计入拐点（第一段直走算作 0 拐点）
  *
- * @param a 起点（逻辑坐标：行x,列y）
- * @param b 终点（逻辑坐标）
+ * @param start 起点（逻辑坐标：行x,列y）
+ * @param end 终点（逻辑坐标）
  * @param map 游戏棋盘：0 表示空格，非0 表示方块
  * @param maxTurns 最大允许拐点数
- * @param logicalToScene 从逻辑坐标到绘制坐标的 QTransform（可传 identity 表示不用变换）
  * @return QVector<QPoint> 路径（包含起点、拐点、终点），若无合法路径返回空
  */
 QVector<QPoint> MainWindow::findLinkPath(
-    const QPoint &a, const QPoint &b,
-    const QVector<QVector<int>> &map,
-    int maxTurns,
-    const QTransform &logicalToScene // 从逻辑->绘制的变换（若不需要变换传 identity）
+    const QPoint &start, const QPoint &end,
+    const QVector<QVector<int>> &map,//已初始化为0~row+1,0~col+1,预留一圈空位
+    int maxTurns
     ) {//获取坐标
-    int aCol = std::floor(a.x());
-    int aRow = std::floor(a.y());
-    int bCol = std::floor(b.x());
-    int bRow = std::floor(b.y());
+    int startCol = start.x();
+    int startRow = start.y();
+    int endCol = end.x();
+    int endRow = end.y();
 
-    if(map[aRow][aCol] != map[bRow][bCol]) return {};//判断值是否相等
+    if(map[startRow][startCol] != map[endRow][endCol]) return {};//判断值是否相等
 
     // 边界检查（注意顺序 col/row）
     auto inBounds = [&](int c, int r) {
-        return c >= 0 && c <= col + 1 && r >= -1 && r <= row + 1;
+        return c >= 0 && c <= col + 1 && r >= 0 && r <= row + 1;
     };
 
     //方向向量（以 col,row 为单位）
     // 上, 右, 下, 左
-    const int dcol[4] = { 0, 1,  0, -1 };
-    const int drow[4] = { -1,0,  1,  0 };
+    const int dcol[4] = { 0 , 1 ,  0 , -1 };
+    const int drow[4] = { -1 , 0 ,  1 , 0 };
 
     // dist[row][col][dir] = 到达该状态时的最小拐点数（dir 是最后一步方向）
+
     const int INF = INT_MAX / 4;
-    struct State { int col; int row; int d; };
+    struct State {
+        int col; int row; int d;
+        State(int c = -2, int r = -2, int dir = DIR_START) : col(c), row(r), d(dir) {}
+    };
 
     QVector<QVector<std::array<int,4>>> dist(
-        row, QVector<std::array<int,4>>(col)
+        (row + 2), QVector<std::array<int,4>>(col + 2)
         );
     QVector<QVector<std::array<State,4>>> parent(
-        row, QVector<std::array<State,4>>(col)
+        (row + 2), QVector<std::array<State,4>>(col + 2)
         );
 
     // 初始化 dist 和 parent
-    for (int r = 0; r < row; ++r) {
-        for (int c = 0; c < col; ++c) {
+    for (int r = 0; r < row + 2; ++r) {
+        for (int c = 0; c < col + 2; ++c) {
             for (int d = 0; d < 4; ++d) {
                 dist[r][c][d] = INF;
-                parent[r][c][d] = {-2, -2, -1};
+                parent[r][c][d] = {-2, -2, DIR_START};
             }
         }
     }
@@ -533,14 +590,14 @@ QVector<QPoint> MainWindow::findLinkPath(
     // === 从起点向四个方向发射 ===
     // 初始直走段不计拐点（turns = 0），把沿该方向能到达的所有连续可通行格子入队
     for (int d = 0; d < 4; ++d) {
-        int nc = aCol + dcol[d];
-        int nr = aRow + drow[d];
+        int nc = startCol + dcol[d];
+        int nr = startRow + drow[d];
 
         // 沿方向延伸直到遇到边界或障碍（障碍为非0且不是终点）
-        while (inBounds(nc, nr) && ( map[nr][nc] == 0 || (nc == bCol && nr == bRow))) {
+        while (inBounds(nc, nr) && ( map[nr][nc] == 0 || (nc == endCol && nr == endRow))) {
             if (dist[nr][nc][d] == INF) {
                 dist[nr][nc][d] = 0;                    // 初始直行段拐点 = 0
-                parent[nr][nc][d] = { aCol, aRow, -1 }; // 父状态标为起点，dir=-1 表示起点
+                parent[nr][nc][d] = { startCol, startRow, DIR_START }; // 父状态标为起点，dir=5 表示起点
                 dq.push_front({ nc, nr, d });           // 0-cost -> push_front (0-1 BFS)
             }
             nc += dcol[d];
@@ -556,17 +613,17 @@ QVector<QPoint> MainWindow::findLinkPath(
         int curTurns = dist[cur.row][cur.col][cur.d];
 
         // 到达终点且拐点数合法 -> 回溯并返回路径
-        if (cur.col == bCol && cur.row == bRow && curTurns <= maxTurns) {
+        if (cur.col == endCol && cur.row == endRow && curTurns <= maxTurns) {
             // 回溯路径
             QVector<QPoint> path;
             State s = cur;
-            while (!(s.col == aCol && s.row == aRow && s.d == -1)) {
-                path.push_back(QPoint(s.col, s.row)); // 暂时保存为逻辑坐标 (col,row)
+            while (!(s.col == startCol && s.row == startRow && s.d == DIR_START)) {
+                path.push_back(QPoint(s.col, s.row));
                 State p = parent[s.row][s.col][s.d];
                 s = p;
             }
             // 加上起点
-            path.push_back(QPoint(aCol, aRow));
+            path.push_back(QPoint(startCol, startRow));
             std::reverse(path.begin(), path.end());
 
             return path;
@@ -577,7 +634,7 @@ QVector<QPoint> MainWindow::findLinkPath(
             int nc = cur.col + dcol[nd];
             int nr = cur.row + drow[nd];
             if (!inBounds(nc, nr)) continue;
-            if (!(map[nr][nc] == 0 || (nc == bCol && nr == bRow))) continue;
+            if (!(map[nr][nc] == 0 || (nc == endCol && nr == endRow))) continue;
 
             int add = (nd == cur.d) ? 0 : 1; // 同方向：0，换方向：+1 拐点
             int ndist = curTurns + add;
@@ -591,7 +648,6 @@ QVector<QPoint> MainWindow::findLinkPath(
             }
         }
     }
-
 
     // 没有找到满足条件的路径
     return {};

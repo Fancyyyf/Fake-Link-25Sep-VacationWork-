@@ -15,6 +15,7 @@ Settings::Settings(QWidget *parent)
     gset.row  = settings.value("block/row", 8).toInt();
     gset.numTypes = settings.value("block/numTypes", 3).toInt();
     gset.character = settings.value("checkBox/character", false).toBool();
+    gset.maxTurns = settings.value("block/maxTurns", 3).toInt();
 
     ui->colEdit->setText(QString::number(gset.col));
     ui->colEdit->setPlaceholderText("请输入列数");
@@ -22,6 +23,8 @@ Settings::Settings(QWidget *parent)
     ui->rowEdit->setPlaceholderText("请输入行数");
     ui->numTypeEdit->setText(QString::number(gset.numTypes));
     ui->numTypeEdit->setPlaceholderText("请输入格子种类");
+    ui->turnsEdit->setText(QString::number(gset.maxTurns));
+    ui->turnsEdit->setPlaceholderText("请输入最大拐点数");
 
     ui->characterBox->setChecked(gset.character);
 
@@ -38,7 +41,7 @@ Settings::~Settings()
     delete ui;
 }
 
-void Settings::saveSets(){
+bool Settings::saveSets(){
     // 指定文件路径和格式
     // QSettings::IniFormat 表示保存为文本INI格式
     QSettings settings("config.txt", QSettings::IniFormat);
@@ -46,28 +49,50 @@ void Settings::saveSets(){
     QString pcol = ui->colEdit->text();
     QString prow = ui->rowEdit->text();
     QString pnumTypes = ui->numTypeEdit->text();
+    QString pTurns = ui->turnsEdit->text();
+
+    if(pcol.toInt() < 2 || pcol.toInt() > 20||
+        prow.toInt() < 2 || prow.toInt() > 20||
+        pTurns.toInt() < 1 ||
+        pnumTypes.toInt() > 6 || pnumTypes.toInt() < 2) return false;
 
     settings.setValue("block/col", pcol);
     settings.setValue("block/row", prow);
     settings.setValue("block/numTypes", pnumTypes);
+    settings.setValue("block/maxTurns", pTurns);
 
     settings.setValue("checkBox/character", gset.character);
 
+    if(gset.character){
+        return false;
+    }
+
+    return true;
 }
 
 
 void Settings::on_saveButton_clicked()
 {
-    saveSets();
-    emit setUpdated();
+    if(saveSets())
+    {
+        emit setUpdated();
 
-    // 弹出消息框提示保存成功
-    QMessageBox msgBox;
-    msgBox.setWindowTitle("提示");
-    msgBox.setText("设置已成功保存！");
-    msgBox.setIcon(QMessageBox::Information); // 信息图标
-    msgBox.setStandardButtons(QMessageBox::Ok); // 只有一个“确定”按钮
-    msgBox.exec(); // 显示消息框并等待用户点击
+        // 弹出消息框提示保存成功
+        QMessageBox msgBox;
+        msgBox.setWindowTitle("提示");
+        msgBox.setText("设置已成功保存！");
+        msgBox.setIcon(QMessageBox::Information); // 信息图标
+        msgBox.setStandardButtons(QMessageBox::Ok); // 只有一个“确定”按钮
+        msgBox.exec(); // 显示消息框并等待用户点击
+    }else{
+        QMessageBox bugBox;
+        bugBox.setWindowTitle("警告");
+        bugBox.setText("保存失败，请按照范围保存"
+                       "(row,col:2~20,maxTurns: > 0,numTypes:3~6)且人物模式尚未完成");
+        bugBox.setIcon(QMessageBox::Warning); // 信息图标
+        bugBox.setStandardButtons(QMessageBox::Ok); // 只有一个“确定”按钮
+        bugBox.exec(); // 显示消息框并等待用户点击
+    }
 }
 
 

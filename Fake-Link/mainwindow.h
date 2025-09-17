@@ -19,6 +19,7 @@
 #include <array>
 #include <climits>
 #include <QtGlobal>   // qRound
+#include <QPainterPath>
 
 #include "pausedialog.h"
 
@@ -60,13 +61,14 @@ protected:
 
     void checkGameFinished();
 
+    void setProtection();//保护上下限
+
     //寻路函数
 
     QVector<QPoint> findLinkPath(
         const QPoint &a, const QPoint &b,
         const QVector<QVector<int>> &map,
-        int maxTurns,
-        const QTransform &logicalToScene
+        int maxTurns
         );
 
 

@@ -63,7 +63,7 @@
    <property name="geometry">
     <rect>
      <x>150</x>
-     <y>150</y>
+     <y>130</y>
      <width>101</width>
      <height>20</height>
     </rect>
@@ -99,7 +99,7 @@
    <property name="geometry">
     <rect>
      <x>40</x>
-     <y>150</y>
+     <y>130</y>
      <width>111</width>
      <height>21</height>
     </rect>
@@ -119,6 +119,29 @@
    </property>
    <property name="text">
     <string>是否使用RPG角色</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="turnsLabel">
+   <property name="geometry">
+    <rect>
+     <x>60</x>
+     <y>170</y>
+     <width>81</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>允许最大拐点数：</string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="turnsEdit">
+   <property name="geometry">
+    <rect>
+     <x>150</x>
+     <y>170</y>
+     <width>101</width>
+     <height>20</height>
+    </rect>
    </property>
   </widget>
  </widget>

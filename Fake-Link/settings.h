@@ -24,7 +24,7 @@ public:
     explicit Settings(QWidget *parent = nullptr);
     ~Settings();
 
-    void saveSets();
+    bool saveSets();
 
 protected:
     void paintEvent(QPaintEvent* event) override;

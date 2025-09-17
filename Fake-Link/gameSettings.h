@@ -7,6 +7,7 @@ struct gameSettings{
     int numTypes = 3;
 
     bool character = false;
+    int maxTurns = 3;
 };
 
 #endif // GAMESETTINGS_H
