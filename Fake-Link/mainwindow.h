@@ -20,8 +20,16 @@
 #include <climits>
 #include <QtGlobal>   // qRound
 #include <QPainterPath>
+#include <QVBoxLayout>
+#include <QResizeEvent>
+#include <QPropertyAnimation>
+#include <QParallelAnimationGroup>
+#include <QGraphicsDropShadowEffect>
 
 #include "pausedialog.h"
+#include "scoreboard.h"
+#include "playercharacter.h"
+
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -37,6 +45,7 @@ public:
     MainWindow(QWidget *parent = nullptr, int row = 8, int col = 10, int numTypes = 3
                , bool character = false, int maxTurns = 3);
     ~MainWindow();
+    void gameTimerStart();
 
 signals:
     void backToPrep();
@@ -47,7 +56,11 @@ signals:
 protected:
     void keyPressEvent(QKeyEvent *event) override;
 
-    void mousePressEvent(QMouseEvent* event) override;
+    void keyReleaseEvent(QKeyEvent *event) override;
+
+    void mousePressEvent(QMouseEvent *event) override;
+
+    void resizeEvent(QResizeEvent *event) override;
 
     void mapInit();//地图初始化
 
@@ -63,8 +76,15 @@ protected:
 
     void setProtection();//保护上下限
 
-    //寻路函数
+    void updateTimerDisplay();//倒计时展示
 
+    void onGameOver();//游戏失败
+
+    void comboAwardScores();//连击奖励分数
+
+    void timeAwardScores();//剩余时间得分加成
+
+    //寻路函数
     QVector<QPoint> findLinkPath(
         const QPoint &a, const QPoint &b,
         const QVector<QVector<int>> &map,
@@ -78,6 +98,10 @@ private slots:
     void gameContinue();
 
     void setRecieved();//接收设置改变的信号
+
+    void updateTimer();//计时器更新
+
+    void tryMove();
 
 private:
     Ui::MainWindow *ui;
@@ -106,8 +130,27 @@ private:
 
     //拐点限制
     int maxTurns;
+    QVector<QPoint> path;//寻找连接路径
 
-    QVector<QPoint> path;
+    //倒计时
+    QTimer *gameTimer;
+    int remainingTime; // 剩余秒数
+    double timerMagnification;//倒计时倍率
+    QLabel *timerLabel;//倒计时展示框
+
+    //计分板
+    scoreBoard* scoreboard;
+
+    //连击加分
+    int combo;
+    QLabel *comboLabel;
+
+    //角色移动处理
+    bool wPressed,aPressed,sPressed,dPressed;//用于处理斜向移动
+    playerCharacter *player1;
+    QTimer *moveTimer;
+    double playerSpeed;
+
 };
 
 

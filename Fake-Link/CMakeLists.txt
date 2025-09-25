@@ -32,7 +32,9 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         settings.h settings.cpp settings.ui
         gameSettings.h
 
-        ${APP_RC}   # 这里加入图标文件
+        ${APP_RC}
+        scoreboard.h scoreboard.cpp
+        playercharacter.h playercharacter.cpp   # 这里加入图标文件
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET Fake-Link APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR

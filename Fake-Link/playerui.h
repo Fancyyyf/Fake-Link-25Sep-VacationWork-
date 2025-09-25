@@ -41,15 +41,15 @@ private slots:
 
 
 protected:
-    void paintEvent(QPaintEvent* event) override;
+    void paintEvent(QPaintEvent *event) override;
 
-    void keyPressEvent(QKeyEvent* event) override;
+    void keyPressEvent(QKeyEvent *event) override;
 
 private:
     Ui::playerUI *ui;
 
     gameSettings gset;
-    Settings* s;
+    Settings *s;
 };
 
 #endif // PLAYERUI_H

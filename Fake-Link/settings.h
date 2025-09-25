@@ -27,9 +27,9 @@ public:
     bool saveSets();
 
 protected:
-    void paintEvent(QPaintEvent* event) override;
+    void paintEvent(QPaintEvent *event) override;
 
-    void keyPressEvent(QKeyEvent* event) override;
+    void keyPressEvent(QKeyEvent *event) override;
 
 signals:
     void setUpdated();

@@ -14,10 +14,10 @@
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-    playerUI* prep = new playerUI;
+    playerUI *prep = new playerUI;
 
     gameSettings gset = prep->preSets();
-    MainWindow* game = new MainWindow(nullptr, gset.row, gset.col, gset.numTypes, gset.character, gset.maxTurns);
+    MainWindow *game = new MainWindow(nullptr, gset.row, gset.col, gset.numTypes, gset.character, gset.maxTurns);
 
 
 //启动动画
@@ -51,6 +51,7 @@ int main(int argc, char *argv[])
     QObject::connect(prep, &playerUI::gameStart, [=]() {
         prep->hide();
         game->show();
+        game->gameTimerStart();
     });
 
     QObject::connect(game, &MainWindow::backToPrep,[=](){

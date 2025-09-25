@@ -43,6 +43,10 @@
         <file>Images/Icon/setIcon.png</file>
         <file>Images/Background/setBG.png</file>
         <file>Images/Background/quitBG.png</file>
+        <file>Images/Player/up.png</file>
+        <file>Images/Player/left.png</file>
+        <file>Images/Player/right.png</file>
+        <file>Images/Player/down.png</file>
     </qresource>
     <qresource prefix="/gifs">
         <file>Temp/GenshinStart.gif</file>

@@ -10,11 +10,20 @@ MainWindow::MainWindow(QWidget *parent, int row, int col, int numTypes
     firstClicked(false), secondClicked(false), match(false),
     success(false),portal(false),
     characterSet(character),
-    maxTurns(maxTurns)
+    maxTurns(maxTurns),
+    combo(0),
+    wPressed(false), aPressed(false), sPressed(false), dPressed(false)
+
 {
     //qDebug() << characterSet;
 
     setProtection();
+
+    if(!characterSet){
+        timerMagnification = 1.3;
+    }else{
+        timerMagnification = 1.6;
+    }
 
     ui->setupUi(this);
     srand((int)time(0));
@@ -55,18 +64,69 @@ MainWindow::MainWindow(QWidget *parent, int row, int col, int numTypes
     tipLabel->hide();  // 初始隐藏
 
     connect(ui->quitButton, &QPushButton::clicked, this, [this]() {
-        // 构造一个 Key_A 的事件
+        //连接退出按钮与ESC
         QKeyEvent event(QEvent::KeyPress, Qt::Key_Escape, Qt::NoModifier);
         QCoreApplication::sendEvent(this, &event);
     });
+
+    //计时器设置
+    // 根据格子数设置时间
+    remainingTime = static_cast<int>(row * col * timerMagnification);
+    timerLabel = new QLabel(this);
+
+    gameTimer = new QTimer(this);
+    connect(gameTimer, &QTimer::timeout, this, &MainWindow::updateTimer);
+    //gameTimer->start(1000); // 每秒触发一次
+
+
+    QVBoxLayout *layout = new QVBoxLayout(ui->centralwidget);
+    // 计时标签显示
+    timerLabel->setAlignment(Qt::AlignCenter);
+    timerLabel->setFont(QFont("Consolas", 32, QFont::Bold)); // 等宽字体
+    timerLabel->setStyleSheet("color: white; background-color: transparent;");
+    layout->addWidget(timerLabel, 0, Qt::AlignHCenter | Qt::AlignTop);
+
+    //计分板
+    scoreboard = new scoreBoard(this);
+    scoreboard->move(width() - scoreboard->width() - 20, 10); // 右上角悬浮
+    scoreboard->show();
+
+    comboLabel = new QLabel(this);
+    comboLabel->setAttribute(Qt::WA_TransparentForMouseEvents);
+    comboLabel->move(width()/5 - comboLabel->width()/2, height()/4);
+    auto shadow = new QGraphicsDropShadowEffect(comboLabel);
+    shadow->setBlurRadius(15);
+    shadow->setOffset(2,2);
+    shadow->setColor(Qt::black);
+    comboLabel->setGraphicsEffect(shadow);
+
+
+    //RPG角色
+    player1 = new playerCharacter(this);
+    player1->setPosition(QPointF(0.0, 0.0));
+    playerSpeed = player1->getSpeed();
+
+    // 游戏循环定时器
+    moveTimer = new QTimer(this);
+    connect(moveTimer, &QTimer::timeout, this, &MainWindow::tryMove);
+    moveTimer->start(20); // ~60fps
 }
 
-MainWindow::~MainWindow()
-{
+MainWindow::~MainWindow(){
     delete ui;
+    delete tipLabel;
+    delete gameTimer;
+    delete scoreboard;
+    delete comboLabel;
+}
+
+void MainWindow::gameTimerStart(){
+    gameTimer->start(1000);
+    updateTimer();
 }
 
 void MainWindow::gameContinue(){
+    gameTimer->start();
     qDebug() << "Game Continued";
 }
 
@@ -85,17 +145,45 @@ void MainWindow::keyPressEvent(QKeyEvent *event){
 
     if (event->key() == Qt::Key_Escape) {
         pauseDialog dlg(this);
+        gameTimer->stop();
         // 连接暂停菜单的“返回准备界面”信号
         connect(&dlg, &pauseDialog::requestBackToPrep, this, [this,&dlg]() {
             emit backToPrep();
             dlg.close();
-            backgroundNum  = std::rand()%6;
+            //backgroundNum  = std::rand()%6;
         });
 
         //继续游戏
         connect(&dlg, &pauseDialog::backToGame, this, &MainWindow::gameContinue);
         dlg.exec();  // 模态运行
     }
+
+    if(characterSet){//使用角色时
+        if (event->key() == Qt::Key_W) {
+            wPressed = true;
+        } else if (event->key() == Qt::Key_A) {
+            aPressed = true;
+        } else if (event->key() == Qt::Key_S) {
+            sPressed = true;
+        } else if (event->key() == Qt::Key_D) {
+            dPressed = true;
+        }
+    }
+}
+
+void MainWindow::keyReleaseEvent(QKeyEvent *event)
+{
+    if (event->key() == Qt::Key_W) {
+        wPressed = false;
+    } else if (event->key() == Qt::Key_A) {
+        aPressed = false;
+    } else if (event->key() == Qt::Key_S) {
+        sPressed = false;
+    } else if (event->key() == Qt::Key_D) {
+        dPressed = false;
+    }
+
+    QWidget::keyReleaseEvent(event);
 }
 
 void MainWindow::mousePressEvent(QMouseEvent *event) {
@@ -127,8 +215,15 @@ void MainWindow::mousePressEvent(QMouseEvent *event) {
     }
 }
 
+void MainWindow::resizeEvent(QResizeEvent *event) {
+    QMainWindow::resizeEvent(event);
+    if (scoreboard) {
+        scoreboard->move(width() - scoreboard->width() - 20, 10);
+    }
+}
 
 void MainWindow::mapInit(){
+    //board.clear();
     if (numTypes < 2) numTypes = 2; // 至少 3 种
     if (numTypes > 6) numTypes = 6; // 至多 6 种
 
@@ -181,7 +276,7 @@ void MainWindow::paintEvent(QPaintEvent *event)
 {
     Q_UNUSED(event);
     QPainter painter(this);
-    painter.setRenderHint(QPainter::Antialiasing,true);//抗锯齿
+    painter.setRenderHint(QPainter::Antialiasing, true);//抗锯齿
     int cellSize = 1; // 每个格子的大小
 
     //绘制背景
@@ -191,25 +286,6 @@ void MainWindow::paintEvent(QPaintEvent *event)
     painter.drawPixmap(rect(), bg);
     painter.setOpacity(1);//透明度还原
 
-    // //设置视口比例，防止地图变形
-    // int heightSide, widthSide;
-    // if (((double)(width())/(double)(height())) > ((double)(col) / (double)(row))) {
-    //     heightSide = height();
-    //     widthSide =  col * heightSide / row;
-    // } else {
-    //     widthSide = width();
-    //     heightSide = row * widthSide / col;
-    // }
-    // painter.setViewport((width()-widthSide)/2,(height()-heightSide)/2,widthSide,heightSide);
-
-    // //设置painter的坐标，方便画图
-    // double marginRatio = 0.20; // 边距比例：2%
-    // double widSpace = col * marginRatio;
-    // double heiSpace = row * marginRatio;
-    // painter.setWindow(-widSpace, -heiSpace, col+2*widSpace, row+2*heiSpace);
-    // //让上方空格更大一些
-
-
     // 计算变换并把它设置到 painter（此时 painter 会把“逻辑坐标”映射到 widget 像素）
     QTransform t = computeLogicalToDeviceTransform();
 
@@ -218,30 +294,29 @@ void MainWindow::paintEvent(QPaintEvent *event)
 
 
     //纯色格子版本
-    /*for (int r = 0; r < row; ++r) {
-        for (int c = 0; c < col; ++c) {
-            QRect rect(c * cellSize, r * cellSize, cellSize, cellSize);
+    // for (int r = 1; r < row + 1; ++r) {
+    //     for (int c = 1; c < col + 1; ++c) {
+    //         QRect rect(c * cellSize, r * cellSize, cellSize, cellSize);
 
-            // 画格子边框
-            painter.setPen(Qt::black);
-            painter.drawRect(rect);
+    //         // 画格子边框
+    //         painter.setPen(Qt::black);
+    //         painter.drawRect(rect);
 
-            // 根据值画不同颜色的箱子
-            int val = board[r][c];
-            if (val > 0) {
-                QColor color;
-                switch (val) {
-                case 1: color = Qt::red; break;
-                case 2: color = Qt::green; break;
-                case 3: color = Qt::blue; break;
-                case 4: color = Qt::yellow; break;
-                default: color = Qt::gray; break;
-                }
-                painter.fillRect(rect.adjusted(2, 2, -2, -2), color);
-            }
-        }
-    }*/
-
+    //         // 根据值画不同颜色的箱子
+    //         int val = board[r][c];
+    //         if (val > 0) {
+    //             QColor color;
+    //             switch (val) {
+    //             case 1: color = Qt::red; break;
+    //             case 2: color = Qt::green; break;
+    //             case 3: color = Qt::blue; break;
+    //             case 4: color = Qt::yellow; break;
+    //             default: color = Qt::gray; break;
+    //             }
+    //             painter.fillRect(rect.adjusted(2, 2, -2, -2), color);
+    //         }
+    //     }
+    // }
     //图片版本
     for (int r = 1; r < row + 1; ++r) {
         for (int c = 1; c < col + 1; ++c) {
@@ -268,6 +343,8 @@ void MainWindow::paintEvent(QPaintEvent *event)
         }
     }
 
+    // 绘制 player（将逻辑坐标变换到像素）
+    player1->draw(&painter, t);
 
 
     if(!path.isEmpty()){
@@ -288,8 +365,8 @@ void MainWindow::paintEvent(QPaintEvent *event)
         }
 
         QLinearGradient grad(drawPath[0], drawPath[drawPath.size()-1]);
-        grad.setColorAt(0, QColor(75, 0, 130, 200));//紫色
-        grad.setColorAt(1, QColor(255, 215, 0, 200));//金色
+        grad.setColorAt(0, QColor(75 , 0  , 130, 200));//紫色
+        grad.setColorAt(1, QColor(255, 215, 0  , 200));//金色
         //屏幕/计算机 → RGB（三基色是红绿蓝，加色模式）,故QColor采用RGB
         //绘画/颜料 → RYB（三基色是红黄蓝，减色模式）
 
@@ -302,7 +379,6 @@ void MainWindow::paintEvent(QPaintEvent *event)
 
         checkGameFinished();
     }
-
 
     painter.restore();//恢复到坐标变换前
 }
@@ -324,11 +400,11 @@ QTransform MainWindow::computeLogicalToDeviceTransform() const {
                         (height() - heightSide) / 2,
                         widthSide, heightSide);
 
-    double marginRatio = 0.15;            // 与你原实现一致
+    double marginRatio = 0.14;//边框倍率
     double widSpace = (col + 2) * marginRatio;
     double heiSpace = (row + 2) * marginRatio;
 
-    windowRect = QRectF(-widSpace, -1.6 * heiSpace, (col + 2) + 2 * widSpace, (row + 2) + 2.6 * heiSpace);
+    windowRect = QRectF(-widSpace, -1.4 * heiSpace, (col + 2) + 2 * widSpace, (row + 2) + 2.4 * heiSpace);
 
 
     double a = double(viewport.width())  / windowRect.width();   // scaleX
@@ -360,11 +436,11 @@ QPointF MainWindow::pixelToLogical(const QPointF &pixel) const {
                      (height() - heightSide) / 2,
                      widthSide, heightSide);
 
-    double marginRatio = 0.15;            // 与你原实现一致
+    double marginRatio = 0.14;
     double widSpace = (col + 2) * marginRatio;
     double heiSpace = (row + 2) * marginRatio;
 
-    windowRect = QRectF(-widSpace, -1.6 * heiSpace, (col + 2) + 2 * widSpace, (row + 2) + 2.6 * heiSpace);
+    windowRect = QRectF(-widSpace, -1.4 * heiSpace, (col + 2) + 2 * widSpace, (row + 2) + 2.4 * heiSpace);
 
 
     //如果点击不在 viewport 内，可选择忽略或裁剪
@@ -386,7 +462,6 @@ QPointF MainWindow::pixelToLogical(const QPointF &pixel) const {
 
     // 直接把 pixel（widget 像素坐标）映射回逻辑坐标
     return inv.map(pixel);
-
 }
 
 void MainWindow::setRecieved(){
@@ -398,9 +473,24 @@ void MainWindow::setRecieved(){
     characterSet = settings.value("checkBox/character", false).toBool();
     maxTurns = settings.value("block/maxTurns", 3).toInt();
 
+    if(!characterSet){
+        timerMagnification = 1.3;
+    }else{
+        timerMagnification = 1.6;
+    }
+
+    remainingTime = static_cast<int>(row * col * timerMagnification);
+    success = portal = false;
+    combo = 0;
+
+    scoreboard->resetScore();
+
     setProtection();
 
-    qDebug() << maxTurns;
+    board.clear();//清空并重新开始初始化
+    board = QVector<QVector<int>>(row + 2, QVector<int>(col + 2, 0));
+
+    //qDebug() << maxTurns;
     mapInit();
 }
 
@@ -413,6 +503,59 @@ void MainWindow::setProtection(){
     if(col < 2) col = 2;
     if(numTypes > 6) numTypes = 6;
     if(numTypes < 2) numTypes = 2;
+}
+
+
+void MainWindow::updateTimer() {
+    //qDebug() << "Test";
+
+    remainingTime--;
+    updateTimerDisplay();
+    checkGameFinished();
+
+    if (remainingTime <= 0) {
+        gameTimer->stop();
+        remainingTime = 0;
+        // 触发游戏结束逻辑
+        onGameOver();
+        return;
+    }
+
+}
+
+void MainWindow::onGameOver(){
+    if(!success){
+        QMessageBox::StandardButton gameOver;
+        gameOver = QMessageBox::information(this,
+                                         "Loser",
+                                         "真菜啊你🤣👉",
+                                         QMessageBox::Ok);  // 只有一个按钮 OK
+
+        if (gameOver == QMessageBox::Ok) {
+            emit backToPrep();
+            setRecieved();
+        }
+    }
+}
+
+void MainWindow::updateTimerDisplay() {
+    // 分钟与秒
+    int minutes = remainingTime / 60;
+    int seconds = remainingTime % 60;
+
+    // 格式化
+    QString timeText = QString("%1:%2")
+                           .arg(minutes, 1, 10, QChar('0'))  // 分钟至少1位
+                           .arg(seconds, 2, 10, QChar('0')); // 秒两位
+
+    timerLabel->setText(timeText);
+
+
+    if (remainingTime < 15) {// 时间低于15秒，显示红色
+        timerLabel->setStyleSheet("color: red; font-weight: bold;");
+    } else {// 正常状态
+        timerLabel->setStyleSheet("color: white;");
+    }
 }
 
 
@@ -450,14 +593,18 @@ void MainWindow::linkStart(int r,int c){
 
         qDebug() << path;
         if(!path.isEmpty()){
-
             match = true;//配对成功
 
             update();
 
-            QTimer::singleShot(500, this, [this]() {
-                qDebug() << "1 second later";
+            QTimer::singleShot(300, this, [this]() {
+                qDebug() << "0.3 second later";
                 // 这里可以执行延时后的操作，比如 update() 绘制
+
+                scoreboard->addScore(board[selRow1][selCol1]);
+                combo ++;
+                qDebug() << combo;
+                comboAwardScores();
 
                 board[selRow1][selCol1] = board[selRow2][selCol2] = 0;
                 selRow1 = selCol1 = selRow2 = selCol2 = -1;
@@ -469,11 +616,15 @@ void MainWindow::linkStart(int r,int c){
                 update();
             });
         }else{
+            comboLabel->hide();
             tipLabel->show();
 
             QTimer::singleShot(1000, this, [this]() {
                 qDebug() << "1 second later";
                 // 这里可以执行延时后的操作，比如 update() 绘制
+
+                combo = 0;
+                qDebug() << combo;
 
                 selRow1 = selCol1 = selRow2 = selCol2 = -1;
                 firstClicked = false;
@@ -485,14 +636,67 @@ void MainWindow::linkStart(int r,int c){
             });
         }
 
-
     }
 
 }
 
+void MainWindow::comboAwardScores(){
+
+    int awardscore = 0;
+    // 选择颜色
+    QString color;
+    if (combo < 5) {
+        return;
+    } else if (combo < 15) {
+        color = "yellow";
+        awardscore = 2;
+    } else if(combo < 25){
+        color = "orange";
+        awardscore = 5;
+    }else{
+        color = "red";
+        awardscore = 8;
+    }
+    scoreboard->addScore(awardscore);
+    qDebug() << "combo success";
+
+    // 设置样式
+    comboLabel->setStyleSheet(
+        QString("QLabel {"
+                "   color: %1;"
+                "   font: bold 28px 'Consolas';"
+                "   background: transparent;"
+                "}").arg(color)
+        );
+
+    comboLabel->setText(QString("Combo x%1! Award+%2").arg(combo).arg(awardscore));
+    comboLabel->adjustSize();
+
+    // comboLabel->show();
+    // comboLabel->raise();
+    // 动画：淡入 + 上升 + 淡出
+    QPropertyAnimation *animOpacity = new QPropertyAnimation(comboLabel, "windowOpacity");
+    animOpacity->setDuration(1500);
+    animOpacity->setKeyValueAt(0, 0.0);
+    animOpacity->setKeyValueAt(0.2, 0.6);
+    animOpacity->setKeyValueAt(0.8, 1.0);
+    animOpacity->setKeyValueAt(1.0, 0.0);
+
+    // QPropertyAnimation *animPos = new QPropertyAnimation(comboLabel, "pos");
+    // animPos->setDuration(1500);
+    // animPos->setStartValue(comboLabel->pos());
+    // animPos->setEndValue(comboLabel->pos() - QPoint(0, 50));
+
+    QParallelAnimationGroup *group = new QParallelAnimationGroup(this);
+    group->addAnimation(animOpacity);
+    // group->addAnimation(animPos);
+    connect(group, &QParallelAnimationGroup::finished, comboLabel, &QLabel::hide);
+
+    comboLabel->show();
+    group->start(QAbstractAnimation::DeleteWhenStopped);
+}
 
 void MainWindow::checkGameFinished(){
-
     if(success){
         success = false;
         return;
@@ -501,10 +705,11 @@ void MainWindow::checkGameFinished(){
     bool allZero = std::all_of(board.begin(), board.end(), [](const QVector<int>& row){
         return std::all_of(row.begin(), row.end(), [](int val){ return val == 0; });
     });
-
+    qDebug() << allZero;
     if ((allZero && !firstClicked) || portal) {
         success = true;
 
+        gameTimer->stop();
         QMessageBox::StandardButton reply;
         reply = QMessageBox::information(this,
                                          "胜利",
@@ -513,8 +718,12 @@ void MainWindow::checkGameFinished(){
 
         if (reply == QMessageBox::Ok) {
             emit backToPrep();
+            combo = 0;
             success = false;
             portal = false;
+            remainingTime = static_cast<int>(row * col * timerMagnification);
+            comboLabel->close();
+
             mapInit();
         }
     }
@@ -649,6 +858,30 @@ QVector<QPoint> MainWindow::findLinkPath(
         }
     }
 
-    // 没有找到满足条件的路径
-    return {};
+    return {};// 没有找到满足条件的路径
+}
+
+
+
+//角色移动
+void MainWindow::tryMove(){
+    // 1) 计算方向向量 (逻辑单位)
+    double vx = 0.0, vy = 0.0;
+    if (wPressed) vy -= 1.0;
+    if (sPressed) vy += 1.0;
+    if (aPressed) vx -= 1.0;
+    if (dPressed) vx += 1.0;
+
+    // 2) 归一化（保证斜向移动与轴向速度一致）
+    double len = qSqrt(vx*vx + vy*vy);
+    double dx = 0.0, dy = 0.0;
+    if (len > 1e-9) {
+        dx = vx / len * playerSpeed;
+        dy = vy / len * playerSpeed;
+    }
+
+    //调用 player 的移动尝试
+    player1->Move(dx, dy, board);
+
+    update();
 }

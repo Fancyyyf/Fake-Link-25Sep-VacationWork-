@@ -63,10 +63,6 @@ bool Settings::saveSets(){
 
     settings.setValue("checkBox/character", gset.character);
 
-    if(gset.character){
-        return false;
-    }
-
     return true;
 }
 
@@ -88,7 +84,7 @@ void Settings::on_saveButton_clicked()
         QMessageBox bugBox;
         bugBox.setWindowTitle("警告");
         bugBox.setText("保存失败，请按照范围保存"
-                       "(row,col:2~20,maxTurns: > 0,numTypes:3~6)且人物模式尚未完成");
+                       "(row,col:2~20,maxTurns: > 0,numTypes:3~6)");
         bugBox.setIcon(QMessageBox::Warning); // 信息图标
         bugBox.setStandardButtons(QMessageBox::Ok); // 只有一个“确定”按钮
         bugBox.exec(); // 显示消息框并等待用户点击
