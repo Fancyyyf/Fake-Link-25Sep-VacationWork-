@@ -3,7 +3,7 @@
 
 playerCharacter::playerCharacter(QObject *parent)
     : QObject(parent),
-    pixPos(0.0, 0.0), // 初始位置（可改）
+    pixPos(-1, -1), // 初始位置（可改）
     dir(Down)
 {
     // 资源路径按你的资源文件调整

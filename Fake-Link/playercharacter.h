@@ -29,7 +29,12 @@ public:
 
     double getSpeed() const {return speed;}
 
-    void setPosition(const QPointF &p) { pixPos = p; }
+    void setPosition(const QPointF &p)
+    {
+        pixPos = p;
+        x = pixPos.x();
+        y = pixPos.y();
+    }
 
     void setSpeed(double s) { speed = s; }
 

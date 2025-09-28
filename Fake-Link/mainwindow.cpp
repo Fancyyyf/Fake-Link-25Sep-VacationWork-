@@ -22,7 +22,7 @@ MainWindow::MainWindow(QWidget *parent, int row, int col, int numTypes
     if(!characterSet){
         timerMagnification = 1.3;
     }else{
-        timerMagnification = 2;
+        timerMagnification = 2.2;
     }
 
     ui->setupUi(this);
@@ -272,6 +272,10 @@ void MainWindow::mapInit(){
     if (numTypes > 6) numTypes = 6; // 至多 6 种
     backgroundNum  = std::rand()%6;
 
+    //角色还原
+    QPointF p(-1, -1);
+    player1 -> setPosition(p);
+
     int total = row * col;
     bool needEmpty = (total % 2 == 1);
     int usable = total - (needEmpty ? 1 : 0);
@@ -279,7 +283,7 @@ void MainWindow::mapInit(){
 
     if (numTypes > pairs) numTypes = pairs; // 每种至少出现一次
 
-    playerSpeed = qMax(row, col) *  0.04;
+    playerSpeed = qMin(qMax(row, col), 10) *  0.025;
     player1->setSpeed(playerSpeed);//速度设置
 
     QVector<int> tiles;
@@ -402,8 +406,10 @@ void MainWindow::paintEvent(QPaintEvent *event)
     // QRectF targetRect(0, 0, 0.8, 0.8); // 浮点矩形
     // painter.drawImage(targetRect, img);
 
-    // 绘制 player（将逻辑坐标变换到像素）
-    player1->draw(&painter, t);
+    if(characterSet){
+        // 绘制 player（将逻辑坐标变换到像素）
+        player1->draw(&painter, t);
+    }
 
 
     if(!path.isEmpty()){
