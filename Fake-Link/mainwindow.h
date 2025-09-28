@@ -84,6 +84,10 @@ protected:
 
     void timeAwardScores();//剩余时间得分加成
 
+    QPixmap loadWithOpacity(const QString &path, qreal opacity, const QSize &size);
+    //背景透明度设置
+
+
     //寻路函数
     QVector<QPoint> findLinkPath(
         const QPoint &a, const QPoint &b,
@@ -150,6 +154,10 @@ private:
     playerCharacter *player1;
     QTimer *moveTimer;
     double playerSpeed;
+
+    //角色选择格子
+    int selTempRow = -1, selTempCol = -1; // -1 表示未选中，第一个格子
+
 
 };
 

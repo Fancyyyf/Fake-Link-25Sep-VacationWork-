@@ -22,7 +22,7 @@ MainWindow::MainWindow(QWidget *parent, int row, int col, int numTypes
     if(!characterSet){
         timerMagnification = 1.3;
     }else{
-        timerMagnification = 1.6;
+        timerMagnification = 2;
     }
 
     ui->setupUi(this);
@@ -30,7 +30,16 @@ MainWindow::MainWindow(QWidget *parent, int row, int col, int numTypes
     this->resize(1600, 900);
     this->setWindowIcon(QIcon(":/images/Images/Icon/mainWIndowIcon.png"));
 
+    //地图背景设置
     backgroundNum  = std::rand()%6;
+    QString pathPix = QString(":/images/Images/Background/pixbg") + QString::number(1 + backgroundNum)+ QString(".png");
+    QPixmap bg = loadWithOpacity(pathPix, 0.7, this->size());;
+    bg = bg.scaled(this->size(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+
+    QPalette pal;
+    pal.setBrush(QPalette::Window, bg);
+    this->setAutoFillBackground(true);
+    this->setPalette(pal);
 
     setWindowTitle("Fake Link");
 
@@ -41,8 +50,6 @@ MainWindow::MainWindow(QWidget *parent, int row, int col, int numTypes
     boxImages.append(QPixmap(":/images/Images/Blocks/box4.png"));
     boxImages.append(QPixmap(":/images/Images/Blocks/box5.png"));
     boxImages.append(QPixmap(":/images/Images/Blocks/box6.png"));
-
-    mapInit();
 
     connect(this, &MainWindow::setChangeMainWindow, this, &MainWindow::setRecieved);
 
@@ -63,6 +70,7 @@ MainWindow::MainWindow(QWidget *parent, int row, int col, int numTypes
     tipLabel->move((width() - tipLabel->width()) / 2, (height() - tipLabel->height()) / 2);
     tipLabel->hide();  // 初始隐藏
 
+    ui->quitButton->setFocusPolicy(Qt::NoFocus);//禁止退出按钮的焦点
     connect(ui->quitButton, &QPushButton::clicked, this, [this]() {
         //连接退出按钮与ESC
         QKeyEvent event(QEvent::KeyPress, Qt::Key_Escape, Qt::NoModifier);
@@ -104,12 +112,16 @@ MainWindow::MainWindow(QWidget *parent, int row, int col, int numTypes
     //RPG角色
     player1 = new playerCharacter(this);
     player1->setPosition(QPointF(0.0, 0.0));
-    playerSpeed = player1->getSpeed();
+    // playerSpeed = qMax(row, col) *  0.1;//速度调整在mapInit中实现
+    // player1->setSpeed(playerSpeed);
 
     // 游戏循环定时器
     moveTimer = new QTimer(this);
     connect(moveTimer, &QTimer::timeout, this, &MainWindow::tryMove);
     moveTimer->start(20); // ~60fps
+
+
+    mapInit();
 }
 
 MainWindow::~MainWindow(){
@@ -168,19 +180,25 @@ void MainWindow::keyPressEvent(QKeyEvent *event){
         } else if (event->key() == Qt::Key_D) {
             dPressed = true;
         }
+
+        if(event->key() == Qt::Key_Space && (selTempRow != -1)){
+            linkStart(selTempRow, selTempCol);
+        }
     }
 }
 
 void MainWindow::keyReleaseEvent(QKeyEvent *event)
 {
-    if (event->key() == Qt::Key_W) {
-        wPressed = false;
-    } else if (event->key() == Qt::Key_A) {
-        aPressed = false;
-    } else if (event->key() == Qt::Key_S) {
-        sPressed = false;
-    } else if (event->key() == Qt::Key_D) {
-        dPressed = false;
+    if(characterSet){
+        if (event->key() == Qt::Key_W) {
+            wPressed = false;
+        } else if (event->key() == Qt::Key_A) {
+            aPressed = false;
+        } else if (event->key() == Qt::Key_S) {
+            sPressed = false;
+        } else if (event->key() == Qt::Key_D) {
+            dPressed = false;
+        }
     }
 
     QWidget::keyReleaseEvent(event);
@@ -220,12 +238,39 @@ void MainWindow::resizeEvent(QResizeEvent *event) {
     if (scoreboard) {
         scoreboard->move(width() - scoreboard->width() - 20, 10);
     }
+
+    QString pathPix = QString(":/images/Images/Background/pixbg") + QString::number(1 + backgroundNum)+ QString(".png");
+    QPixmap bg = loadWithOpacity(pathPix, 0.7, this->size());;
+    bg = bg.scaled(this->size(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+
+    QPalette pal;
+    pal.setBrush(QPalette::Window, bg);
+    this->setAutoFillBackground(true);
+    this->setPalette(pal);
+
 }
+
+
+QPixmap MainWindow::loadWithOpacity(const QString &path, qreal opacity, const QSize &size) {
+    QPixmap src(path);
+    src = src.scaled(size, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+
+    QPixmap result(src.size());
+    result.fill(Qt::white); // 先用白色填充作为背景
+    QPainter p(&result);
+    p.setOpacity(opacity);
+    p.drawPixmap(0, 0, src);
+    p.end();
+
+    return result;
+}
+
 
 void MainWindow::mapInit(){
     //board.clear();
     if (numTypes < 2) numTypes = 2; // 至少 3 种
     if (numTypes > 6) numTypes = 6; // 至多 6 种
+    backgroundNum  = std::rand()%6;
 
     int total = row * col;
     bool needEmpty = (total % 2 == 1);
@@ -233,6 +278,9 @@ void MainWindow::mapInit(){
     int pairs = usable / 2;
 
     if (numTypes > pairs) numTypes = pairs; // 每种至少出现一次
+
+    playerSpeed = qMax(row, col) *  0.04;
+    player1->setSpeed(playerSpeed);//速度设置
 
     QVector<int> tiles;
     tiles.reserve(usable);
@@ -266,8 +314,12 @@ void MainWindow::mapInit(){
             board[r][c] = tiles[idx++];
         }
     }
-
     path.clear();
+
+    //临时改一下再改回去，帮忙刷新背景
+    QSize s = this->size();
+    this->resize(s.width()+1, s.height()); // 先+1
+    this->resize(s);
     update();
 }
 
@@ -279,12 +331,12 @@ void MainWindow::paintEvent(QPaintEvent *event)
     painter.setRenderHint(QPainter::Antialiasing, true);//抗锯齿
     int cellSize = 1; // 每个格子的大小
 
-    //绘制背景
-    painter.setOpacity(0.6);  // 设置透明度 0.0~1.0
-    QString pathPix = QString(":/images/Images/Background/pixbg") + QString::number(1 + backgroundNum)+ QString(".png");
-    QPixmap bg(pathPix);
-    painter.drawPixmap(rect(), bg);
-    painter.setOpacity(1);//透明度还原
+    //绘制背景,放弃这个方法，反复重画挤占线程
+    // painter.setOpacity(0.6);  // 设置透明度 0.0~1.0
+    // QString pathPix = QString(":/images/Images/Background/pixbg") + QString::number(1 + backgroundNum)+ QString(".png");
+    // QPixmap bg(pathPix);
+    // painter.drawPixmap(rect(), bg);
+    // painter.setOpacity(1);//透明度还原
 
     // 计算变换并把它设置到 painter（此时 painter 会把“逻辑坐标”映射到 widget 像素）
     QTransform t = computeLogicalToDeviceTransform();
@@ -324,7 +376,6 @@ void MainWindow::paintEvent(QPaintEvent *event)
 
             // 画格子边框
             painter.setPen(Qt::NoPen);
-            painter.drawRect(rect);
 
             int val = board[r][c];
             if (val > 0 && val <= boxImages.size()) {
@@ -332,6 +383,10 @@ void MainWindow::paintEvent(QPaintEvent *event)
                 painter.drawPixmap(rect, boxImages[val - 1]);
             }
 
+            if (characterSet && r == selTempRow && c == selTempCol) {
+                QColor overlay(100, 100, 100, 120); // RGBA，alpha=120 半透明
+                painter.fillRect(rect, overlay);
+            }
             if (firstClicked && r == selRow1 && c == selCol1) {
                 QColor overlay(100, 100, 100, 120); // RGBA，alpha=120 半透明
                 painter.fillRect(rect, overlay);
@@ -343,12 +398,16 @@ void MainWindow::paintEvent(QPaintEvent *event)
         }
     }
 
+    // QImage img(":/images/Images/Player/down.png");
+    // QRectF targetRect(0, 0, 0.8, 0.8); // 浮点矩形
+    // painter.drawImage(targetRect, img);
+
     // 绘制 player（将逻辑坐标变换到像素）
     player1->draw(&painter, t);
 
 
     if(!path.isEmpty()){
-        qDebug() << "draw";
+        qDebug() << "drawPath";
 
         //QPoint只能整数坐标，于是更新QPointF方便绘画
         QVector<QPointF> drawPath;
@@ -384,7 +443,7 @@ void MainWindow::paintEvent(QPaintEvent *event)
 }
 
 
-QTransform MainWindow::computeLogicalToDeviceTransform() const {
+QTransform MainWindow::computeLogicalToDeviceTransform() const{
     QRect viewport;
     QRectF windowRect;
 
@@ -406,7 +465,6 @@ QTransform MainWindow::computeLogicalToDeviceTransform() const {
 
     windowRect = QRectF(-widSpace, -1.4 * heiSpace, (col + 2) + 2 * widSpace, (row + 2) + 2.4 * heiSpace);
 
-
     double a = double(viewport.width())  / windowRect.width();   // scaleX
     double c = double(viewport.height()) / windowRect.height();  // scaleY
     double b = double(viewport.left())  - windowRect.left() * a; // translateX
@@ -419,7 +477,7 @@ QTransform MainWindow::computeLogicalToDeviceTransform() const {
 }
 
 
-QPointF MainWindow::pixelToLogical(const QPointF &pixel) const {
+QPointF MainWindow::pixelToLogical(const QPointF &pixel) const{
     QRect viewport;
     QRectF windowRect;
 
@@ -705,7 +763,7 @@ void MainWindow::checkGameFinished(){
     bool allZero = std::all_of(board.begin(), board.end(), [](const QVector<int>& row){
         return std::all_of(row.begin(), row.end(), [](int val){ return val == 0; });
     });
-    qDebug() << allZero;
+    //qDebug() << allZero;
     if ((allZero && !firstClicked) || portal) {
         success = true;
 
@@ -880,8 +938,27 @@ void MainWindow::tryMove(){
         dy = vy / len * playerSpeed;
     }
 
+    QTransform trans = computeLogicalToDeviceTransform();
+    QTransform invTrans = trans.inverted(); // 从屏幕坐标 → 逻辑坐标
+
+    // 把窗口的四个边角点转换成逻辑坐标
+    QPointF topLeft     = invTrans.map(QPointF(0, 0));
+    QPointF topRight    = invTrans.map(QPointF(width(), 0));
+    QPointF bottomLeft  = invTrans.map(QPointF(0, height()));
+    QPointF bottomRight = invTrans.map(QPointF(width(), height()));
+
     //调用 player 的移动尝试
-    player1->Move(dx, dy, board);
+    player1->Move(dx, dy, topLeft.x(), bottomRight.x(), topLeft.y(), bottomRight.y(), board);
+
+    //选择最近朝向的一点
+    QPoint p(-1, -1);
+    QPoint q = player1->selectTips(board);
+    if(p != q){
+        selTempRow = q.y();
+        selTempCol = q.x();
+    }else{
+        selTempRow = selTempCol = -1;
+    }
 
     update();
 }

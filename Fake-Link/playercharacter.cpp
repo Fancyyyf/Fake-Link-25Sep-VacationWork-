@@ -7,112 +7,88 @@ playerCharacter::playerCharacter(QObject *parent)
     dir(Down)
 {
     // 资源路径按你的资源文件调整
-    imgUp    = QPixmap(":/images/Images/Player/up.png");
-    imgDown  = QPixmap(":/images/Images/Player/down.png");
-    imgLeft  = QPixmap(":/images/Images/Player/left.png");
-    imgRight = QPixmap(":/images/Images/Player/right.png");
+    imgUp    = QImage(":/images/Images/Player/up.png");
+    imgDown  = QImage(":/images/Images/Player/down.png");
+    imgLeft  = QImage(":/images/Images/Player/left.png");
+    imgRight = QImage(":/images/Images/Player/right.png");
 }
 
-bool playerCharacter::canOccupyRect(double left, double top, double right, double bottom,
-                           const QVector<QVector<int>> &board) const
+void playerCharacter::Move(double dx, double dy, double leftLimit, double rightLimit,
+                           double topLimit, double bottomLimit, const QVector<QVector<int>> &board)
 {
-    // int rows = board.size();
-    // int cols = board[0].size();
+    double newX = x + dx;
+    double newY = y + dy;
+        // 更新朝向：根据 dx,dy 的主方向决定贴图
+    if(dx == 0 && dy == 0){
+        return;
+    }else if (qAbs(dx) > qAbs(dy)) {
+        dir = (dx > 0) ? Right : Left;
+    } else {
+        dir = (dy >= 0) ? Down : Up;
+    }
 
-    // // 需要检查与该矩形相交的所有格子
-    // int cMin = qFloor(left);
-    // int cMax = qFloor(qMax(left, right - 1e-9)); // 右边界可能正好是整数
-    // int rMin = qFloor(top);
-    // int rMax = qFloor(qMax(top, bottom - 1e-9));
+    // 这里检查是否会碰到边界
+    if (x + dx < leftLimit || x + dx + pixwid > rightLimit ||
+        y + dy < topLimit || y + dy + pixhei > bottomLimit) {
+        //缺陷：可能存在小缝隙
+        return ;  // 如果移动后会超出边界，返回 false
+    }
 
-    // // 保证索引在范围内
-    // cMin = qMax(0, cMin);
-    // rMin = qMax(0, rMin);
-    // cMax = qMin(cols - 1, cMax);
-    // rMax = qMin(rows - 1, rMax);
+    int left = static_cast<int> (newX);
+    int top = static_cast<int> (newY);
+    int right = static_cast<int> (newX + pixwid);
+    int bottom = static_cast<int> (newY + pixhei);
 
-    // for (int r = rMin; r <= rMax; ++r) {
-    //     for (int c = cMin; c <= cMax; ++c) {
-    //         if (board[r][c] != 0) return false; // 非零格子为障碍
-    //     }
-    // }
-    return true;
-}
+    int allRow = board.size();
+    int allCol = board[0].size();
 
-void playerCharacter::Move(double dx, double dy, const QVector<QVector<int>> &board)
-{
-    double newX = x += dx;
-    double newY = y += dy;
+    if(right < 0 || left > allCol || bottom < 0 || top > allRow){
+        //不在地图范围内可自由移动
+        x = newX;
+        y = newY;
+        pixPos = QPointF(x, y);
+        return;
+    }
 
-    x = newX;
-    y = newY;
-    pixPos = QPointF(newX, newY);
+    //辅助判断是否越界
+    auto inMap = [&](int row, int col) -> bool {
+        if (row < 0 || row >= allRow || col < 0 || col >= allCol) {
+            return false; // 在地图外
+        }
+        return true; // 在地图内，只有空地能进入
+    };
 
+    bool xMove1 = true;
+    bool xMove2 = true;
+    bool yMove1 = true;
+    bool yMove2 = true;
+    // 实现斜向移动
+    if(dx > 0){
+        if(inMap(top, right)) xMove1 = (board[top][right] == 0) ? true : false;
+        if(inMap(bottom, right)) xMove2 = (board[bottom][right] == 0) ? true : false;
+    }else{
+        if(inMap(top, left)) xMove1 = (board[top][left] == 0) ? true : false;
+        if(inMap(bottom, left)) xMove2 = (board[bottom][left] == 0) ? true : false;
+    }
 
-    // // 目标中心
-    // QPointF newCenter = pos + QPointF(dx, dy);
+    if(dy > 0){
+        if(inMap(bottom, right)) yMove1 = (board[bottom][right] == 0) ? true : false;
+        if(inMap(bottom, left)) yMove2 = (board[bottom][left] == 0) ? true : false;
+    }else{
+        if(inMap(top, right)) yMove1 = (board[top][right] == 0) ? true : false;
+        if(inMap(top, left)) yMove2 = (board[top][left] == 0) ? true : false;
+    }
 
-    // // 计算矩形（center -> left/top/right/bottom）
-    // double halfW = widthLogic / 2.0;
-    // double halfH = heightLogic / 2.0;
+    if(xMove1 && xMove2) x = newX;
+    if(yMove1 && yMove2) y = newY;
+    pixPos = QPointF(x, y);
 
-    // double left   = newCenter.x() - halfW;
-    // double top    = newCenter.y() - halfH;
-    // double right  = newCenter.x() + halfW;
-    // double bottom = newCenter.y() + halfH;
-
-    // // 碰撞检测（在逻辑坐标系）
-    // if (canOccupyRect(left, top, right, bottom, board)) {
-    //     pos = newCenter;
-
-    //     // 更新朝向：根据 dx,dy 的主方向决定贴图
-    //     if (qAbs(dx) >= qAbs(dy)) {
-    //         dir = (dx > 0) ? Right : Left;
-    //     } else {
-    //         dir = (dy > 0) ? Down : Up;
-    //     }
-
-    //     emit positionChanged(pos);
-    //     return true;
-    // }
-
-    // // 如果整步不可行，你可以尝试逐轴移动（允许沿轴滑动）
-    // // 先尝试只沿 X：
-    // bool moved = false;
-    // if (!qFuzzyIsNull(dx)) {
-    //     QPointF tryCenterX = pos + QPointF(dx, 0);
-    //     double l = tryCenterX.x() - halfW, t = tryCenterX.y() - halfH;
-    //     double r = tryCenterX.x() + halfW, b = tryCenterX.y() + halfH;
-    //     if (canOccupyRect(l, t, r, b, board)) {
-    //         pos = tryCenterX;
-    //         dir = (dx > 0) ? Right : Left;
-    //         moved = true;
-    //     }
-    // }
-    // if (!moved && !qFuzzyIsNull(dy)) {
-    //     QPointF tryCenterY = pos + QPointF(0, dy);
-    //     double l = tryCenterY.x() - halfW, t = tryCenterY.y() - halfH;
-    //     double r = tryCenterY.x() + halfW, b = tryCenterY.y() + halfH;
-    //     if (canOccupyRect(l, t, r, b, board)) {
-    //         pos = tryCenterY;
-    //         dir = (dy > 0) ? Down : Up;
-    //         moved = true;
-    //     }
-    // }
-
-    // if (moved) {
-    //     emit positionChanged(pos);
-    //     return true;
-    // }
-
-    // // 无法移动
-    // return false;
 }
 
 void playerCharacter::draw(QPainter *painter, const QTransform &logicToScene)
 {
     //qDebug() << "draw Player";
-    QPixmap *current = nullptr;
+    QImage *current = nullptr;
     switch (dir) {
     case Up:    current = &imgUp; break;
     case Down:  current = &imgDown; break;
@@ -126,16 +102,45 @@ void playerCharacter::draw(QPainter *painter, const QTransform &logicToScene)
         return;
     }
 
-    //painter->fillRect(QRectF(0,0,5,5), Qt::red);
-    painter->setOpacity(1.0);
-    painter->setCompositionMode(QPainter::CompositionMode_SourceOver);
-    painter->setClipping(false);
-    QRect rect(pixPos.x(), pixPos.y(), pixwid, pixhei);
-    painter->setPen(Qt::NoPen);
-    painter->drawRect(rect);
+    QRectF targetRect(pixPos.x(), pixPos.y(), 0.8, 0.8); // 浮点矩形
+    painter->drawImage(targetRect, *current);
+}
 
-    // painter->drawPixmap(0, 0 , imgDown);
 
-    QImage img(":/images/Images/Player/down.png");
-    painter->drawImage(0, 0, img);
+QPoint playerCharacter::selectTips(const QVector<QVector<int>> &board){
+    double midX = x + pixwid/2;
+    double midY = y + pixhei/2;
+
+    switch(dir){
+    case Up:
+        midY -= 1;
+        break;
+    case Down:
+        midY += 1;
+        break;
+    case Left:
+        midX -= 1;
+        break;
+    case Right:
+        midX += 1;
+        break;
+    }
+
+    int tmpX = static_cast<int>(midX);
+    int tmpY = static_cast<int>(midY);
+
+    int allRow = board.size();
+    int allCol = board[0].size();
+
+    QPoint fake(-1, -1);//返回无法选择的点；
+    if(tmpX < 0 || tmpX > allCol - 1 || tmpY < 0 || tmpY > allRow - 1){
+        return fake;
+    }
+
+    if(board[tmpY][tmpX] == 0){
+        return fake;
+    }else{
+        QPoint p(tmpX, tmpY);
+        return p;
+    }
 }
