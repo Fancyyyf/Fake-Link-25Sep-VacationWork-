@@ -11,11 +11,11 @@ Settings::Settings(QWidget *parent)
     //界面设置
     QSettings settings("config.txt", QSettings::IniFormat);//随程序发布统一配置
 
-    gset.col = settings.value("block/col", 10).toInt();
-    gset.row  = settings.value("block/row", 8).toInt();
-    gset.numTypes = settings.value("block/numTypes", 3).toInt();
+    gset.col = settings.value("block/col", 6).toInt();
+    gset.row  = settings.value("block/row", 6).toInt();
+    gset.numTypes = settings.value("block/numTypes", 4).toInt();
     gset.character = settings.value("checkBox/character", false).toBool();
-    gset.maxTurns = settings.value("block/maxTurns", 3).toInt();
+    gset.maxTurns = settings.value("block/maxTurns", 2).toInt();
 
     ui->colEdit->setText(QString::number(gset.col));
     ui->colEdit->setPlaceholderText("请输入列数");
@@ -54,7 +54,7 @@ bool Settings::saveSets(){
     if(pcol.toInt() < 2 || pcol.toInt() > 20||
         prow.toInt() < 2 || prow.toInt() > 20||
         pTurns.toInt() < 1 ||
-        pnumTypes.toInt() > 6 || pnumTypes.toInt() < 2) return false;
+        pnumTypes.toInt() > 20 || pnumTypes.toInt() < 2) return false;
 
     settings.setValue("block/col", pcol);
     settings.setValue("block/row", prow);
@@ -84,7 +84,7 @@ void Settings::on_saveButton_clicked()
         QMessageBox bugBox;
         bugBox.setWindowTitle("警告");
         bugBox.setText("保存失败，请按照范围保存"
-                       "(row,col:2~20,maxTurns: > 0,numTypes:3~6)");
+                       "(row,col:2~20,maxTurns: > 0,numTypes:3~20)");
         bugBox.setIcon(QMessageBox::Warning); // 信息图标
         bugBox.setStandardButtons(QMessageBox::Ok); // 只有一个“确定”按钮
         bugBox.exec(); // 显示消息框并等待用户点击

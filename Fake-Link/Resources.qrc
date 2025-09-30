@@ -47,6 +47,34 @@
         <file>Images/Player/left.png</file>
         <file>Images/Player/right.png</file>
         <file>Images/Player/down.png</file>
+        <file>Images/Noita/delay30sec.png</file>
+        <file>Images/Noita/Dizzy.png</file>
+        <file>Images/Noita/Flash.png</file>
+        <file>Images/Noita/Freeze.png</file>
+        <file>Images/Noita/HInt.png</file>
+        <file>Images/Noita/noitablcok16.png</file>
+        <file>Images/Noita/noitablock0.png</file>
+        <file>Images/Noita/noitablock1.png</file>
+        <file>Images/Noita/noitablock2.png</file>
+        <file>Images/Noita/noitablock3.png</file>
+        <file>Images/Noita/noitablock4.png</file>
+        <file>Images/Noita/noitablock5.png</file>
+        <file>Images/Noita/noitablock6.png</file>
+        <file>Images/Noita/noitablock7.png</file>
+        <file>Images/Noita/noitablock8.png</file>
+        <file>Images/Noita/noitablock9.png</file>
+        <file>Images/Noita/noitablock10.png</file>
+        <file>Images/Noita/noitablock11.png</file>
+        <file>Images/Noita/noitablock13.png</file>
+        <file>Images/Noita/noitablock14.png</file>
+        <file>Images/Noita/noitablock15.png</file>
+        <file>Images/Noita/noitablock16.png</file>
+        <file>Images/Noita/noitablock17.png</file>
+        <file>Images/Noita/noitaBlock18.png</file>
+        <file>Images/Noita/noitablock19.png</file>
+        <file>Images/Noita/noitablock20.png</file>
+        <file>Images/Noita/noitablock21.png</file>
+        <file>Images/Noita/shuffleTool.png</file>
     </qresource>
     <qresource prefix="/gifs">
         <file>Temp/GenshinStart.gif</file>

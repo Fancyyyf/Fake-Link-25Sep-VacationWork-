@@ -39,10 +39,10 @@ void playerUI::on_pushButton_clicked()
 gameSettings playerUI::preSets(){
     QSettings settings("config.txt", QSettings::IniFormat);//随程序发布统一配置
 
-    gset.col = settings.value("block/col", 10).toInt();
-    gset.row  = settings.value("block/row", 8).toInt();
-    gset.numTypes = settings.value("block/numTypes", 3).toInt();
-    gset.maxTurns = settings.value("block/maxTurns", 3).toInt();
+    gset.col = settings.value("block/col", 6).toInt();
+    gset.row  = settings.value("block/row", 6).toInt();
+    gset.numTypes = settings.value("block/numTypes", 4).toInt();
+    gset.maxTurns = settings.value("block/maxTurns", 2).toInt();
     gset.character = settings.value("checkBox/character", false).toBool();
 
     //qDebug() << gset.character;

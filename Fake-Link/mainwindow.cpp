@@ -20,9 +20,9 @@ MainWindow::MainWindow(QWidget *parent, int row, int col, int numTypes
     setProtection();
 
     if(!characterSet){
-        timerMagnification = 1.3;
+        timerMagnification = 0.8 + 0.1 * numTypes;
     }else{
-        timerMagnification = 2.2;
+        timerMagnification = 1.8 + 0.1 * numTypes;
     }
 
     ui->setupUi(this);
@@ -44,12 +44,10 @@ MainWindow::MainWindow(QWidget *parent, int row, int col, int numTypes
     setWindowTitle("Fake Link");
 
     //加载图片
-    boxImages.append(QPixmap(":/images/Images/Blocks/box1.png"));
-    boxImages.append(QPixmap(":/images/Images/Blocks/box2.png"));
-    boxImages.append(QPixmap(":/images/Images/Blocks/box3.png"));
-    boxImages.append(QPixmap(":/images/Images/Blocks/box4.png"));
-    boxImages.append(QPixmap(":/images/Images/Blocks/box5.png"));
-    boxImages.append(QPixmap(":/images/Images/Blocks/box6.png"));
+    for(int i = 0;i < 20; i++){
+        QString pathPix = QString(":/images/Images/Noita/noitablock") + QString::number(i + 1)+ QString(".png");
+        boxImages.append(QPixmap(pathPix));
+    }
 
     connect(this, &MainWindow::setChangeMainWindow, this, &MainWindow::setRecieved);
 
@@ -171,14 +169,32 @@ void MainWindow::keyPressEvent(QKeyEvent *event){
     }
 
     if(characterSet){//使用角色时
+
+        playerCharacter::Direction curDir = player1 -> getDir();
         if (event->key() == Qt::Key_W) {
             wPressed = true;
+            if( curDir == playerCharacter::Up && selTempRow != -1){
+                linkStart(selTempRow, selTempCol);
+            }
+
         } else if (event->key() == Qt::Key_A) {
             aPressed = true;
+            if( curDir == playerCharacter::Left && selTempRow != -1){
+                linkStart(selTempRow, selTempCol);
+            }
+
         } else if (event->key() == Qt::Key_S) {
             sPressed = true;
+            if( curDir == playerCharacter::Down && selTempRow != -1){
+                linkStart(selTempRow, selTempCol);
+            }
+
         } else if (event->key() == Qt::Key_D) {
             dPressed = true;
+            if( curDir == playerCharacter::Right && selTempRow != -1){
+                linkStart(selTempRow, selTempCol);
+            }
+
         }
 
         if(event->key() == Qt::Key_Space && (selTempRow != -1)){
@@ -228,9 +244,18 @@ void MainWindow::mousePressEvent(QMouseEvent *event) {
                 update();
             }
         }
-    }else{
-        QMainWindow::mousePressEvent(event);
     }
+
+    if(event->button() == Qt::RightButton){//右键取消
+        if(firstClicked){
+            firstClicked = false;
+            selRow1 = selCol1 = -1;
+
+            update();
+        }
+    }
+    QMainWindow::mousePressEvent(event);
+
 }
 
 void MainWindow::resizeEvent(QResizeEvent *event) {
@@ -269,8 +294,17 @@ QPixmap MainWindow::loadWithOpacity(const QString &path, qreal opacity, const QS
 void MainWindow::mapInit(){
     //board.clear();
     if (numTypes < 2) numTypes = 2; // 至少 3 种
-    if (numTypes > 6) numTypes = 6; // 至多 6 种
+    if (numTypes > 20) numTypes = 20; // 至多 20 种
+
+    int maxNum = row * col / 2;
+    if(numTypes > maxNum){//保护防止过度设置种类
+        numTypes = maxNum;
+    }
+
     backgroundNum  = std::rand()%6;
+
+    firstClicked = false;
+    selRow1 = selCol1 = -1;
 
     //角色还原
     QPointF p(-1, -1);
@@ -283,7 +317,7 @@ void MainWindow::mapInit(){
 
     if (numTypes > pairs) numTypes = pairs; // 每种至少出现一次
 
-    playerSpeed = qMin(qMax(row, col), 10) *  0.025;
+    playerSpeed = qMin(qMax(row, col), 8) *  0.02;
     player1->setSpeed(playerSpeed);//速度设置
 
     QVector<int> tiles;
@@ -531,11 +565,11 @@ QPointF MainWindow::pixelToLogical(const QPointF &pixel) const{
 void MainWindow::setRecieved(){
     QSettings settings("config.txt", QSettings::IniFormat);//随程序发布统一配置
 
-    col = settings.value("block/col", 10).toInt();
-    row  = settings.value("block/row", 8).toInt();
-    numTypes = settings.value("block/numTypes", 3).toInt();
+    col = settings.value("block/col", 6).toInt();
+    row  = settings.value("block/row", 6).toInt();
+    numTypes = settings.value("block/numTypes", 4).toInt();
     characterSet = settings.value("checkBox/character", false).toBool();
-    maxTurns = settings.value("block/maxTurns", 3).toInt();
+    maxTurns = settings.value("block/maxTurns", 2).toInt();
 
     if(!characterSet){
         timerMagnification = 1.3;
@@ -565,7 +599,7 @@ void MainWindow::setProtection(){
     if(col > 20) col = 20;
     if(row < 2) row = 2;
     if(col < 2) col = 2;
-    if(numTypes > 6) numTypes = 6;
+    if(numTypes > 20) numTypes = 20;
     if(numTypes < 2) numTypes = 2;
 }
 

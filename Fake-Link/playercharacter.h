@@ -38,6 +38,8 @@ public:
 
     void setSpeed(double s) { speed = s; }
 
+    Direction getDir(){return dir;}
+
     QPoint selectTips(const QVector<QVector<int>> &board);
 
 signals:
@@ -52,8 +54,8 @@ private:
     Direction dir = Down;
 
     // 玩家在逻辑坐标系中的占用尺寸（以格子为单位，默认小于1），稍微小一点，不然容易卡住
-    double pixwid = 0.7;
-    double pixhei = 0.7;
+    double pixwid = 0.4;
+    double pixhei = 0.4;
 
     double speed; // 单位：逻辑单位/帧（可由 MainWindow 调整）
 

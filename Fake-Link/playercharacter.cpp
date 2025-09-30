@@ -102,7 +102,7 @@ void playerCharacter::draw(QPainter *painter, const QTransform &logicToScene)
         return;
     }
 
-    QRectF targetRect(pixPos.x(), pixPos.y(), 0.8, 0.8); // 浮点矩形
+    QRectF targetRect(x - 0.2, y - 0.2, 0.8, 0.8); // 浮点矩形
     painter->drawImage(targetRect, *current);
 }
 

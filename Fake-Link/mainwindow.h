@@ -42,8 +42,8 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    MainWindow(QWidget *parent = nullptr, int row = 8, int col = 10, int numTypes = 3
-               , bool character = false, int maxTurns = 3);
+    MainWindow(QWidget *parent = nullptr, int row = 6, int col = 6, int numTypes = 4
+               , bool character = false, int maxTurns = 2);
     ~MainWindow();
     void gameTimerStart();
 
