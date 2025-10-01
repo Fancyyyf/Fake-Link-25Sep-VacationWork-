@@ -95,7 +95,12 @@ protected:
         int maxTurns
         );
 
+    //道具函数
+    void useTool(int Num);
 
+    void secDelayTool();
+
+    void shuffleTool();
 
 
 private slots:
@@ -158,6 +163,9 @@ private:
     //角色选择格子
     int selTempRow = -1, selTempCol = -1; // -1 表示未选中，第一个格子
 
+    //道具
+    QLabel *delayLabel;
+    QLabel *shuffleLabel;
 
 };
 

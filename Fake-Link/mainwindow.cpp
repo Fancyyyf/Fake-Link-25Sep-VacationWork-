@@ -60,13 +60,35 @@ MainWindow::MainWindow(QWidget *parent, int row, int col, int numTypes
 
     //初始化失败弹窗
     // 创建提示 QLabel
-    tipLabel = new QLabel("配对失败！", this);
+    tipLabel = new QLabel("配对失败！Score -10", this);
     tipLabel->setStyleSheet("background-color: rgba(255,0,0,200); color: white; "
-                            "font-weight: bold; padding: 10px; border-radius: 5px;");
+                            "font-weight: bold; padding: 12px; border-radius: 5px;");
     tipLabel->setAlignment(Qt::AlignCenter);
-    tipLabel->setFixedSize(120, 50);
+    tipLabel->setFixedSize(180, 50);
     tipLabel->move((width() - tipLabel->width()) / 2, (height() - tipLabel->height()) / 2);
     tipLabel->hide();  // 初始隐藏
+
+    //初始化道具提示
+    //延时
+    delayLabel = new QLabel("时间增加30s", this);
+    delayLabel->setStyleSheet("background-color: rgba(173, 216, 230,200); color: purple; "
+                              "font-weight: bold; padding: 14px; border-radius: 5px;");
+    delayLabel->setAlignment(Qt::AlignCenter);
+    delayLabel->setFixedSize(120, 60);
+    delayLabel->move((width() - tipLabel->width()) / 2, (height() - tipLabel->height()) / 2);
+    delayLabel->hide();  // 初始隐藏
+
+    //重排
+    shuffleLabel = new QLabel("Shuffle!", this);
+    shuffleLabel->setStyleSheet("background-color: rgba(0, 100, 0, 200);"   /* 深绿色 (DarkGreen) */
+                                "color: rgba(173, 216, 230, 255);"          /* 水蓝色 (DarkTurquoise) */
+                                "font-weight: 600;font-size: 24px;"
+                                " padding: 14px; border-radius: 5px;");
+    shuffleLabel->setAlignment(Qt::AlignCenter);
+    shuffleLabel->setFixedSize(160, 100);
+    shuffleLabel->move((width() - tipLabel->width()) / 2, (height() - tipLabel->height()) / 2);
+    shuffleLabel->hide();  // 初始隐藏
+
 
     ui->quitButton->setFocusPolicy(Qt::NoFocus);//禁止退出按钮的焦点
     connect(ui->quitButton, &QPushButton::clicked, this, [this]() {
@@ -197,8 +219,13 @@ void MainWindow::keyPressEvent(QKeyEvent *event){
 
         }
 
-        if(event->key() == Qt::Key_Space && (selTempRow != -1)){
-            linkStart(selTempRow, selTempCol);
+        if(event->key() == Qt::Key_Q){//取消选择
+            if(firstClicked){
+                firstClicked = false;
+                selRow1 = selCol1 = -1;
+
+                update();
+            }
         }
     }
 }
@@ -275,7 +302,6 @@ void MainWindow::resizeEvent(QResizeEvent *event) {
 
 }
 
-
 QPixmap MainWindow::loadWithOpacity(const QString &path, qreal opacity, const QSize &size) {
     QPixmap src(path);
     src = src.scaled(size, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
@@ -289,7 +315,6 @@ QPixmap MainWindow::loadWithOpacity(const QString &path, qreal opacity, const QS
 
     return result;
 }
-
 
 void MainWindow::mapInit(){
     //board.clear();
@@ -311,8 +336,10 @@ void MainWindow::mapInit(){
     player1 -> setPosition(p);
 
     int total = row * col;
-    bool needEmpty = (total % 2 == 1);
-    int usable = total - (needEmpty ? 1 : 0);
+    int toolNum = total / 15;//道具数量
+    if(toolNum > 10) toolNum = 10;//限制道具数量
+    bool needEmpty = ((total - toolNum) % 2 == 1);
+    int usable = (total - toolNum) - (needEmpty ? 1 : 0);
     int pairs = usable / 2;
 
     if (numTypes > pairs) numTypes = pairs; // 每种至少出现一次
@@ -338,6 +365,12 @@ void MainWindow::mapInit(){
         for (int k = 0; k < pairsPerType[t]; ++k) {
             tiles.append(t + 1);
             tiles.append(t + 1);
+        }
+    }
+
+    if(toolNum != 0){//添加道具格子，暂时全部使用延时
+        for(int i = 0;i < toolNum;i++){
+            tiles.append(-2);
         }
     }
 
@@ -421,16 +454,34 @@ void MainWindow::paintEvent(QPaintEvent *event)
                 painter.drawPixmap(rect, boxImages[val - 1]);
             }
 
+            if(val < 0){//道具格子绘制
+                QPixmap toolPath;
+                //确定图案路径
+                if(val == -1){
+                    toolPath.load(":/images/Images/Noita/delay30sec.png");
+                }else if(val == -2){
+                    toolPath.load(":/images/Images/Noita/shuffleTool.png");
+                }
+
+                // 绘制淡紫色光晕 (多层半透明椭圆/矩形模拟阴影)
+                QColor glowColor(186, 167, 255, 120); // 紫色 + 透明
+                painter.setPen(Qt::NoPen);
+                painter.setBrush(glowColor);
+                painter.drawEllipse(rect); // 光晕效果
+
+                painter.drawPixmap(rect, toolPath);//覆盖上图片
+            }
+
             if (characterSet && r == selTempRow && c == selTempCol) {
-                QColor overlay(100, 100, 100, 120); // RGBA，alpha=120 半透明
+                QColor overlay(100, 100, 100, 100); // RGBA，alpha=120 半透明
                 painter.fillRect(rect, overlay);
             }
             if (firstClicked && r == selRow1 && c == selCol1) {
-                QColor overlay(100, 100, 100, 120); // RGBA，alpha=120 半透明
+                QColor overlay(100, 100, 100, 140); // RGBA，alpha=120 半透明
                 painter.fillRect(rect, overlay);
             }
             if (secondClicked && r == selRow2 && c == selCol2) {
-                QColor overlay(100, 100, 100, 120); // RGBA，alpha=120 半透明
+                QColor overlay(100, 100, 100, 140); // RGBA，alpha=120 半透明
                 painter.fillRect(rect, overlay);
             }
         }
@@ -652,7 +703,7 @@ void MainWindow::updateTimerDisplay() {
     if (remainingTime < 15) {// 时间低于15秒，显示红色
         timerLabel->setStyleSheet("color: red; font-weight: bold;");
     } else {// 正常状态
-        timerLabel->setStyleSheet("color: white;");
+        timerLabel->setStyleSheet("color: #800080;"); // 紫色
     }
 }
 
@@ -666,6 +717,16 @@ void MainWindow::linkStart(int r,int c){
         selRow1 = r;
         selCol1 = c;
         firstClicked = true;
+
+        if(board[r][c] < 0){
+            int toolNum = board[r][c];
+
+            selRow1 = selCol1 = -1;
+            firstClicked = false;
+            board[r][c] = 0;
+
+            useTool(toolNum);
+        }
 
         update();
     }else{
@@ -716,6 +777,7 @@ void MainWindow::linkStart(int r,int c){
         }else{
             comboLabel->hide();
             tipLabel->show();
+            scoreboard->addScore(-10);
 
             QTimer::singleShot(1000, this, [this]() {
                 qDebug() << "1 second later";
@@ -811,7 +873,7 @@ void MainWindow::checkGameFinished(){
         QMessageBox::StandardButton reply;
         reply = QMessageBox::information(this,
                                          "胜利",
-                                         "恭喜你，全部消除完成！",
+                                         "Elaina向通关的你比了个心🥰",
                                          QMessageBox::Ok);  // 只有一个按钮 OK
 
         if (reply == QMessageBox::Ok) {
@@ -999,6 +1061,58 @@ void MainWindow::tryMove(){
     }else{
         selTempRow = selTempCol = -1;
     }
+
+    update();
+}
+
+
+//道具实现
+void MainWindow::useTool(int Num){
+    if(Num == -1){
+        secDelayTool();
+    }
+    if(Num == -2){
+        shuffleTool();
+    }
+}
+
+//-1： 延时30s
+void MainWindow::secDelayTool(){
+    remainingTime += 30;
+    delayLabel->show();
+    QTimer::singleShot(800, this, [=]() {// 延时
+        delayLabel -> close();
+
+        qDebug() << "500ms later";
+    });
+
+}
+
+
+void MainWindow::shuffleTool(){
+    QVector<int> tiles;
+    int Sum = row * col;
+    int idx = 0;
+    tiles.reserve(Sum);
+    for (int r = 1; r < row + 1; ++r) {
+        for (int c = 1; c < col + 1; ++c) {
+            tiles.append(board[r][c]);
+        }
+    }
+    std::shuffle(tiles.begin(), tiles.end(), *QRandomGenerator::global());
+
+    for (int r = 1; r < row + 1; ++r) {
+        for (int c = 1; c < col + 1; ++c) {
+            board[r][c] = tiles[idx++];
+        }
+    }
+
+    shuffleLabel->show();
+    QTimer::singleShot(800, this, [=]() {// 延时
+        shuffleLabel -> close();
+
+        qDebug() << "500ms later";
+    });
 
     update();
 }
