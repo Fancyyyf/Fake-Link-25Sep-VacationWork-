@@ -106,6 +106,14 @@ protected:
 
     void shuffleTool();
 
+    void hintTool();
+
+    void flashTool();
+
+    void freezeTool();
+
+    void dizzyTool();
+
 
 private slots:
     void gameContinue();

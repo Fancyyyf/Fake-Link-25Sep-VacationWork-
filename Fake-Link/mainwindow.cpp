@@ -408,19 +408,19 @@ void MainWindow::mapInit(){
         QPointF q(col + 1, row + 1);
         player2 -> setPosition(q);
     }
+    playerSpeed = qMin(qMax(row, col), 8) *  0.02;
+    player1->setSpeed(playerSpeed);//速度设置
+    player2->setSpeed(playerSpeed);//速度设置
+
 
     int total = row * col;
-    int toolNum = total / 15;//道具数量
-    if(toolNum > 10) toolNum = 10;//限制道具数量
+    int toolNum = total / 10;//道具数量
+    qDebug()<<toolNum;
     bool needEmpty = ((total - toolNum) % 2 == 1);
     int usable = (total - toolNum) - (needEmpty ? 1 : 0);
     int pairs = usable / 2;
 
     if (numTypes > pairs) numTypes = pairs; // 每种至少出现一次
-
-    playerSpeed = qMin(qMax(row, col), 8) *  0.02;
-    player1->setSpeed(playerSpeed);//速度设置
-    player2->setSpeed(playerSpeed);//速度设置
 
     QVector<int> tiles;
     tiles.reserve(usable);
@@ -442,11 +442,47 @@ void MainWindow::mapInit(){
         }
     }
 
-    if(toolNum != 0){//添加道具格子，暂时全部使用延时
-        for(int i = 0;i < toolNum;i++){
-            tiles.append(-2);
+    QVector<int> allTools(6, 0);
+    if(doubleCharacter && toolNum > 2){
+        allTools[4] += 1;
+        allTools[5] += 1;
+        toolNum -= 2;
+    }
+
+    switch (toolNum){
+        case 0: break;
+        case 1: allTools[0] += 1;
+            break;
+        case 2: allTools[0] += 1;
+            allTools[1] += 1;
+            break;
+        case 3:allTools[0] += 1;
+            allTools[1] += 1;
+            allTools[2] += 1;
+            break;
+        case 4:allTools[0] += 1;
+            allTools[1] += 1;
+            allTools[2] += 1;
+            allTools[3] += 1;
+            break;
+        default:
+            for(int i = 0; i < 4; i++){
+                allTools[i] += 1;
+                toolNum -= 1;
+            }
+            while (toolNum > 0) {
+                int t = (std::rand()) % 6;
+                allTools[t]++;
+                toolNum--;
+            }
+    }
+    //填入道具
+    for (int t = 0; t < 6; ++t) {
+        for (int k = 0; k < allTools[t]; ++k) {
+            tiles.append(- t - 1);
         }
     }
+
 
     if(needEmpty) tiles.append(0);//补上第奇数个，为空
 
@@ -533,10 +569,19 @@ void MainWindow::paintEvent(QPaintEvent *event)
             if(val < 0){//道具格子绘制
                 QPixmap toolPath;
                 //确定图案路径
-                if(val == -1){
-                    toolPath.load(":/images/Images/Noita/delay30sec.png");
-                }else if(val == -2){
-                    toolPath.load(":/images/Images/Noita/shuffleTool.png");
+                switch(val){
+                case -1: toolPath.load(":/images/Images/Noita/delay30sec.png");
+                    break;
+                case -2: toolPath.load(":/images/Images/Noita/shuffleTool.png");
+                    break;
+                case -3: toolPath.load(":/images/Images/Noita/HInt.png");
+                    break;
+                case -4: toolPath.load(":/images/Images/Noita/Flash.png");
+                    break;
+                case -5: toolPath.load(":/images/Images/Noita/Freeze.png");
+                    break;
+                case -6: toolPath.load(":/images/Images/Noita/Dizzy.png");
+                    break;
                 }
 
                 // 绘制淡紫色光晕 (多层半透明椭圆/矩形模拟阴影)
@@ -1374,12 +1419,21 @@ void MainWindow::tryMove2(){
 
 //道具实现
 void MainWindow::useTool(int Num){
-    if(Num == -1){
-        secDelayTool();
+    switch(Num){
+    case -1:secDelayTool();
+        break;
+    case -2:shuffleTool();
+        break;
+    case -3:hintTool();
+        break;
+    case -4:flashTool();
+        break;
+    case -5:freezeTool();
+        break;
+    case -6:dizzyTool();
+        break;
     }
-    if(Num == -2){
-        shuffleTool();
-    }
+
 }
 
 //-1： 延时30s
@@ -1432,4 +1486,20 @@ void MainWindow::shuffleTool(){
     });
 
     update();
+}
+
+void MainWindow::hintTool(){
+    return;
+}
+
+void MainWindow::flashTool(){
+    return;
+}
+
+void MainWindow::freezeTool(){
+    return;
+}
+
+void MainWindow::dizzyTool(){
+    return;
 }
