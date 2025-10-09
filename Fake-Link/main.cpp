@@ -17,7 +17,7 @@ int main(int argc, char *argv[])
     playerUI *prep = new playerUI;
 
     gameSettings gset = prep->preSets();
-    MainWindow *game = new MainWindow(nullptr, gset.row, gset.col, gset.numTypes, gset.character, gset.maxTurns);
+    MainWindow *game = new MainWindow(nullptr, gset.row, gset.col, gset.numTypes, gset.character, gset.maxTurns, gset.doubleCharacter);
 
 
 //启动动画

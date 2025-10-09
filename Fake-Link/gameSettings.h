@@ -8,6 +8,7 @@ struct gameSettings{
 
     bool character = false;
     int maxTurns = 2;
+    bool doubleCharacter = false;
 };
 
 #endif // GAMESETTINGS_H

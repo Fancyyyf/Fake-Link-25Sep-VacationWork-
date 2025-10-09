@@ -43,7 +43,7 @@ class MainWindow : public QMainWindow
 
 public:
     MainWindow(QWidget *parent = nullptr, int row = 6, int col = 6, int numTypes = 4
-               , bool character = false, int maxTurns = 2);
+               , bool character = false, int maxTurns = 2, bool doubleCharacter = false);
     ~MainWindow();
     void gameTimerStart();
 
@@ -72,6 +72,8 @@ protected:
 
     void linkStart(int row,int col);//开始配对
 
+    void linkStart2(int r, int c);//角色2配对
+
     void checkGameFinished();
 
     void setProtection();//保护上下限
@@ -81,6 +83,8 @@ protected:
     void onGameOver();//游戏失败
 
     void comboAwardScores();//连击奖励分数
+
+    void comboAwardScores2();//角色2连击奖励
 
     void timeAwardScores();//剩余时间得分加成
 
@@ -111,6 +115,8 @@ private slots:
     void updateTimer();//计时器更新
 
     void tryMove();
+
+    void tryMove2();
 
 private:
     Ui::MainWindow *ui;
@@ -161,11 +167,32 @@ private:
     double playerSpeed;
 
     //角色选择格子
-    int selTempRow = -1, selTempCol = -1; // -1 表示未选中，第一个格子
+    int selTempRow1 = -1, selTempCol1 = -1; // -1 表示未选中，第一个格子
 
     //道具
     QLabel *delayLabel;
     QLabel *shuffleLabel;
+
+
+    //双人模式
+    bool doubleCharacter;
+    //角色移动处理
+    bool upPressed,leftPressed,downPressed,rightPressed;//用于处理斜向移动
+    playerCharacter *player2;
+
+    //角色选择格子
+    int selTempRow2 = -1, selTempCol2 = -1; // -1 表示未选中，第一个格子
+
+    bool firstClicked2;//判断是否已经选中格子
+    bool secondClicked2;//选中第二个格子
+    bool match2;//判断是否配对成功
+    int selRow12 = -1, selCol12 = -1; // -1 表示未选中，第一个格子
+    int selRow22 = -1, selCol22 = -1; // -1 表示未选中，第二个格子
+
+    QVector<QPoint> path2;//寻找连接路径2
+
+    int combo2;
+    QLabel *comboLabel2;
 
 };
 

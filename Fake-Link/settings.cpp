@@ -15,6 +15,7 @@ Settings::Settings(QWidget *parent)
     gset.row  = settings.value("block/row", 6).toInt();
     gset.numTypes = settings.value("block/numTypes", 4).toInt();
     gset.character = settings.value("checkBox/character", false).toBool();
+    gset.doubleCharacter = settings.value("checkBox/doubleCharacter", false).toBool();
     gset.maxTurns = settings.value("block/maxTurns", 2).toInt();
 
     ui->colEdit->setText(QString::number(gset.col));
@@ -27,11 +28,17 @@ Settings::Settings(QWidget *parent)
     ui->turnsEdit->setPlaceholderText("请输入最大拐点数");
 
     ui->characterBox->setChecked(gset.character);
+    ui->doubleCharacterBox->setChecked(gset.doubleCharacter);
 
 
     connect(ui->characterBox, &QCheckBox::toggled, this, [=](bool checked){
         gset.character = checked;  // 每次点击都会更新
         qDebug() << "当前 isBoxChecked =" << gset.character;
+    });
+
+    connect(ui->doubleCharacterBox, &QCheckBox::toggled, this, [=](bool checked){
+        gset.doubleCharacter = checked;  // 每次点击都会更新
+        qDebug() << "当前 doubleCharacterBoxChecked =" << gset.doubleCharacter;
     });
 
 }
@@ -56,12 +63,40 @@ bool Settings::saveSets(){
         pTurns.toInt() < 1 ||
         pnumTypes.toInt() > 20 || pnumTypes.toInt() < 2) return false;
 
+
+
     settings.setValue("block/col", pcol);
     settings.setValue("block/row", prow);
     settings.setValue("block/numTypes", pnumTypes);
     settings.setValue("block/maxTurns", pTurns);
 
+    if(gset.character == false && gset.doubleCharacter == true){
+
+        gset.character = true;
+        ui->characterBox->setChecked(gset.character);
+
+        settings.setValue("checkBox/character", gset.character);
+        settings.setValue("checkBox/doubleCharacter", gset.doubleCharacter);
+
+
+        // 弹出消息框提示角色选择
+        QMessageBox *Box = new QMessageBox(this);
+        Box->setWindowTitle("提示");
+        Box->setText("禁止双角色但选择鼠标模式，已协助勾选characterSet");
+        Box->setIcon(QMessageBox::Information); // 信息图标
+        Box->setStandardButtons(QMessageBox::NoButton); // 不显示按钮
+        Box->show();
+        QPoint center = this->geometry().center();
+        QRect boxRect = Box->geometry();
+        Box->move(center.x() - boxRect.width() / 2, center.y() - boxRect.height() / 2 - 140);
+
+        // 3秒后关闭
+        QTimer::singleShot(2000, Box, &QMessageBox::accept);
+        return true;
+    }
+
     settings.setValue("checkBox/character", gset.character);
+    settings.setValue("checkBox/doubleCharacter", gset.doubleCharacter);
 
     return true;
 }
@@ -104,6 +139,7 @@ void Settings::paintEvent(QPaintEvent* event){
     // 或绘制图片背景
     QPixmap pix(":/images/Images/Background/setBG.png");
     painter.drawPixmap(this->rect(), pix);
+
 }
 
 

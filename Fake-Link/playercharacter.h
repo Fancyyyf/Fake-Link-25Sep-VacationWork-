@@ -15,7 +15,7 @@ class playerCharacter:public QObject
 public:
     enum Direction { Up, Down, Left, Right };
 
-    explicit playerCharacter(QObject *parent = nullptr);
+    explicit playerCharacter(QObject *parent = nullptr, int num = 1);
 
     // 尝试移动（由 MainWindow 传入 dx,dy（逻辑坐标单位）和地图）
     // 返回是否实际移动成功
@@ -61,6 +61,9 @@ private:
 
     // 方向图片
     QImage imgUp, imgDown, imgLeft, imgRight;
+
+    //玩家序号
+    int number = 1;
 
 };
 

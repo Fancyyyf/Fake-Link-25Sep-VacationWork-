@@ -43,7 +43,7 @@
    <property name="geometry">
     <rect>
      <x>150</x>
-     <y>50</y>
+     <y>60</y>
      <width>101</width>
      <height>20</height>
     </rect>
@@ -53,7 +53,7 @@
    <property name="geometry">
     <rect>
      <x>150</x>
-     <y>90</y>
+     <y>100</y>
      <width>101</width>
      <height>20</height>
     </rect>
@@ -72,8 +72,8 @@
   <widget class="QLabel" name="colLabel">
    <property name="geometry">
     <rect>
-     <x>80</x>
-     <y>50</y>
+     <x>70</x>
+     <y>60</y>
      <width>51</width>
      <height>21</height>
     </rect>
@@ -85,7 +85,7 @@
   <widget class="QLabel" name="rowLabel">
    <property name="geometry">
     <rect>
-     <x>80</x>
+     <x>70</x>
      <y>100</y>
      <width>51</width>
      <height>16</height>
@@ -98,9 +98,9 @@
   <widget class="QLabel" name="numTypeLabel">
    <property name="geometry">
     <rect>
-     <x>40</x>
+     <x>20</x>
      <y>130</y>
-     <width>111</width>
+     <width>131</width>
      <height>21</height>
     </rect>
    </property>
@@ -124,9 +124,9 @@
   <widget class="QLabel" name="turnsLabel">
    <property name="geometry">
     <rect>
-     <x>60</x>
+     <x>40</x>
      <y>170</y>
-     <width>81</width>
+     <width>111</width>
      <height>21</height>
     </rect>
    </property>
@@ -142,6 +142,19 @@
      <width>101</width>
      <height>20</height>
     </rect>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="doubleCharacterBox">
+   <property name="geometry">
+    <rect>
+     <x>130</x>
+     <y>220</y>
+     <width>121</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>是否采用双人模式</string>
    </property>
   </widget>
  </widget>

@@ -9,17 +9,28 @@ class scoreBoard : public QWidget {
     Q_OBJECT
 
 public:
-    explicit scoreBoard(QWidget *parent = nullptr);
+    explicit scoreBoard(QWidget *parent = nullptr, int num = 1);
 
     void addScore(int delta);
+
+    void addScore2(int delta);
+
     void resetScore();
+
     int getScore() const;
+
+    int getScore2() const;
+
+    void changePlayers(int num);
 
 protected:
     void paintEvent(QPaintEvent *event) override;
 
 private:
     int score;
+    int score2;
+
+    int playerNum;
 };
 
 #endif // SCOREBOARD_H

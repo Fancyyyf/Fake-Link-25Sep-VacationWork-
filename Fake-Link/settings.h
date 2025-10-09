@@ -9,6 +9,7 @@
 #include <QPaintEvent>
 #include <QPainter>
 #include <QKeyEvent>
+#include <QTimer>
 
 #include "gameSettings.h"
 

@@ -44,6 +44,7 @@ gameSettings playerUI::preSets(){
     gset.numTypes = settings.value("block/numTypes", 4).toInt();
     gset.maxTurns = settings.value("block/maxTurns", 2).toInt();
     gset.character = settings.value("checkBox/character", false).toBool();
+    gset.doubleCharacter = settings.value("checkBox/doubleCharacter", false).toBool();
 
     //qDebug() << gset.character;
     return gset;

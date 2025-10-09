@@ -1,6 +1,7 @@
 #include "scoreboard.h"
 
-scoreBoard::scoreBoard(QWidget *parent):QWidget(parent),score(0) {
+scoreBoard::scoreBoard(QWidget *parent, int num):
+    QWidget(parent),score(0), score2(0), playerNum(num){
     this->resize(240, 160);
 }
 
@@ -9,14 +10,28 @@ void scoreBoard::addScore(int delta) {
     if (score < 0) score = 0; // 防止负分
     update();
 }
+void scoreBoard::addScore2(int delta) {
+    score2 += delta;
+    if (score2 < 0) score2 = 0; // 防止负分
+    update();
+}
 
 void scoreBoard::resetScore() {
     score = 0;
+    score2 = 0;
     update();
 }
 
 int scoreBoard::getScore() const {
     return score;
+}
+
+int scoreBoard::getScore2() const {
+    return score2;
+}
+
+void scoreBoard::changePlayers(int num){
+    playerNum = num;
 }
 
 void scoreBoard::paintEvent(QPaintEvent *event) {
@@ -46,8 +61,13 @@ void scoreBoard::paintEvent(QPaintEvent *event) {
     painter.drawText(rect1, Qt::AlignHCenter | Qt::AlignVCenter, QString("Player_1: %1").arg(score));
 
     // 行 2
-    QRect rect2(0, 10 + 2 * lineHeight, width(), lineHeight);
-    painter.drawText(rect2, Qt::AlignHCenter | Qt::AlignVCenter, "Player_2: default");
+    if (playerNum == 1){
+        QRect rect2(0, 10 + 2 * lineHeight, width(), lineHeight);
+        painter.drawText(rect2, Qt::AlignHCenter | Qt::AlignVCenter, "Player_2: default");
+    }else{
+        QRect rect2(0, 10 + 2 * lineHeight, width(), lineHeight);
+        painter.drawText(rect2, Qt::AlignHCenter | Qt::AlignVCenter, QString("Player_2: %1").arg(score2));
+    }
 
     // 行 3
     QRect rect3(0, 10 + 3 * lineHeight, width(), lineHeight);

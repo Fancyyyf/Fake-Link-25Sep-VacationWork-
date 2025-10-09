@@ -1,16 +1,17 @@
 #include "playercharacter.h"
 #include <QtMath>
 
-playerCharacter::playerCharacter(QObject *parent)
+playerCharacter::playerCharacter(QObject *parent, int num)
     : QObject(parent),
     pixPos(-1, -1), // 初始位置（可改）
-    dir(Down)
+    dir(Down),
+    number(num)
 {
     // 资源路径按你的资源文件调整
-    imgUp    = QImage(":/images/Images/Player/up.png");
-    imgDown  = QImage(":/images/Images/Player/down.png");
-    imgLeft  = QImage(":/images/Images/Player/left.png");
-    imgRight = QImage(":/images/Images/Player/right.png");
+    imgUp    = QImage(":/images/Images/Player" +  QString::number(num) + "/up.png");
+    imgDown  = QImage(":/images/Images/Player" +  QString::number(num) + "/down.png");
+    imgLeft  = QImage(":/images/Images/Player" +  QString::number(num) + "/left.png");
+    imgRight = QImage(":/images/Images/Player" +  QString::number(num) + "/right.png");
 }
 
 void playerCharacter::Move(double dx, double dy, double leftLimit, double rightLimit,

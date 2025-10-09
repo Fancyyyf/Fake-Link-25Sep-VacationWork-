@@ -43,10 +43,6 @@
         <file>Images/Icon/setIcon.png</file>
         <file>Images/Background/setBG.png</file>
         <file>Images/Background/quitBG.png</file>
-        <file>Images/Player/up.png</file>
-        <file>Images/Player/left.png</file>
-        <file>Images/Player/right.png</file>
-        <file>Images/Player/down.png</file>
         <file>Images/Noita/delay30sec.png</file>
         <file>Images/Noita/Dizzy.png</file>
         <file>Images/Noita/Flash.png</file>
@@ -75,6 +71,14 @@
         <file>Images/Noita/noitablock20.png</file>
         <file>Images/Noita/noitablock21.png</file>
         <file>Images/Noita/shuffleTool.png</file>
+        <file>Images/Player1/down.png</file>
+        <file>Images/Player1/left.png</file>
+        <file>Images/Player1/right.png</file>
+        <file>Images/Player1/up.png</file>
+        <file>Images/Player2/down.png</file>
+        <file>Images/Player2/left.png</file>
+        <file>Images/Player2/right.png</file>
+        <file>Images/Player2/up.png</file>
     </qresource>
     <qresource prefix="/gifs">
         <file>Temp/GenshinStart.gif</file>
