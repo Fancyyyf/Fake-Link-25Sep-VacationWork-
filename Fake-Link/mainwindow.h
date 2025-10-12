@@ -100,7 +100,7 @@ protected:
         );
 
     //道具函数
-    void useTool(int Num);
+    void useTool(int Num, int playerNum);
 
     void secDelayTool();
 
@@ -110,10 +110,17 @@ protected:
 
     void flashTool();
 
-    void freezeTool();
+    void freezeTool(int playerNum);
 
-    void dizzyTool();
+    void dizzyTool(int playerNum);
 
+    void canHint();//调用hint
+
+    void tempLink(int r, int c);//hintTool实现
+
+    bool detect(int r, int c);//探测上下左右是否有格子
+
+    void flashMove(QPointF p);
 
 private slots:
     void gameContinue();
@@ -180,6 +187,10 @@ private:
     //道具
     QLabel *delayLabel;
     QLabel *shuffleLabel;
+    QLabel *freezeLabel;
+    QLabel *dizzyLabel;
+    QLabel *hintLabel;
+    QLabel *flashLabel;
 
 
     //双人模式
@@ -202,6 +213,20 @@ private:
     int combo2;
     QLabel *comboLabel2;
 
+    bool freeze1 = false, freeze2 = false;
+
+    bool dizzy1 = false, dizzy2 = false;
+
+    bool startHint = false;
+
+    bool flash = false;
+
+    int canLinkRow1 = -1, canLinkCol1 = -1; // -1 表示未选中，第一个格子
+    int canLinkRow2 = -1, canLinkCol2 = -1; // -1 表示未选中，第二个格子
+    bool canFirstClicked;//判断是否已经选中格子
+    bool canSecondClicked;//选中第二个格子
+    bool canMatch;//判断是否配对成功
+    QVector<QPoint> canLinkPath;//寻找连接路径
 };
 
 

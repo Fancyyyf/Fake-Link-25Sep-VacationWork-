@@ -23,7 +23,7 @@ public:
               double topLimit, double bottomLimit, const QVector<QVector<int>> &board);
 
     // 绘制（使用逻辑->场景变换）
-    void draw(QPainter *painter, const QTransform &logicToScene);
+    void draw(QPainter *painter, const QTransform &logicToScen, bool freeze);
 
     QPointF position() const { return pixPos; }
 

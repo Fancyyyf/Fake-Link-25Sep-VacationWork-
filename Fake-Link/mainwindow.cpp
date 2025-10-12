@@ -14,7 +14,8 @@ MainWindow::MainWindow(QWidget *parent, int row, int col, int numTypes
     combo(0),
     wPressed(false), aPressed(false), sPressed(false), dPressed(false),
     upPressed(false), leftPressed(false), downPressed(false), rightPressed(false),
-    firstClicked2(false), secondClicked2(false), match2(false)
+    firstClicked2(false), secondClicked2(false), match2(false),
+    canFirstClicked(false), canSecondClicked(false), canMatch(false)
 {
     qDebug() << doubleCharacter;
 
@@ -63,7 +64,8 @@ MainWindow::MainWindow(QWidget *parent, int row, int col, int numTypes
     //初始化失败弹窗
     // 创建提示 QLabel
     tipLabel = new QLabel("配对失败！Score -10", this);
-    tipLabel->setStyleSheet("background-color: rgba(255,0,0,200); color: white; "
+    tipLabel->setStyleSheet("background-color: rgba(201,24,75,200);"   //凝珠红
+                            "color: rgba(240, 240, 240, 255);"         //象牙白
                             "font-weight: bold; padding: 12px; border-radius: 5px;");
     tipLabel->setAlignment(Qt::AlignCenter);
     tipLabel->setFixedSize(180, 50);
@@ -73,23 +75,63 @@ MainWindow::MainWindow(QWidget *parent, int row, int col, int numTypes
     //初始化道具提示
     //延时
     delayLabel = new QLabel("时间增加30s", this);
-    delayLabel->setStyleSheet("background-color: rgba(173, 216, 230,200); color: purple; "
+    delayLabel->setStyleSheet("background-color: rgba(173, 216, 230, 230); color: purple; "
                               "font-weight: bold; padding: 14px; border-radius: 5px;");
     delayLabel->setAlignment(Qt::AlignCenter);
     delayLabel->setFixedSize(120, 60);
-    delayLabel->move((width() - tipLabel->width()) / 2, (height() - tipLabel->height()) / 2);
+    delayLabel->move((width() - delayLabel->width()) / 2, (height() - delayLabel->height()) / 2);
     delayLabel->hide();  // 初始隐藏
 
     //重排
     shuffleLabel = new QLabel("Shuffle!", this);
-    shuffleLabel->setStyleSheet("background-color: rgba(0, 100, 0, 200);"   /* 深绿色 (DarkGreen) */
+    shuffleLabel->setStyleSheet("background-color: rgba(0, 100, 0, 230);"   /* 深绿色 (DarkGreen) */
                                 "color: rgba(173, 216, 230, 255);"          /* 水蓝色 (DarkTurquoise) */
                                 "font-weight: 600;font-size: 24px;"
                                 " padding: 14px; border-radius: 5px;");
     shuffleLabel->setAlignment(Qt::AlignCenter);
     shuffleLabel->setFixedSize(160, 100);
-    shuffleLabel->move((width() - tipLabel->width()) / 2, (height() - tipLabel->height()) / 2);
+    shuffleLabel->move((width() - shuffleLabel->width()) / 2, (height() - shuffleLabel->height()) / 2);
     shuffleLabel->hide();  // 初始隐藏
+
+    //冰冻
+    freezeLabel = new QLabel("Freeze!", this);
+    freezeLabel->setStyleSheet("background-color: rgba(91, 187, 255, 230);"   /* 蝶翅蓝 */
+                                "color: rgba(255, 251, 184, 255);"          /* 琥珀 */
+                                "font-weight: 600;font-size: 24px;"
+                                " padding: 14px; border-radius: 5px;");
+    freezeLabel->adjustSize();
+    freezeLabel->hide();  // 初始隐藏
+
+    //错位
+    dizzyLabel = new QLabel("Dizzy!", this);
+    dizzyLabel->setStyleSheet("background-color: rgba(46, 49, 124, 230);"   /* 满天星紫 */
+                               "color: rgba(248, 195, 135, 255);"          /* 蛋壳黄 */
+                               "font-weight: 600;font-size: 24px;"
+                               " padding: 14px; border-radius: 5px;");
+    dizzyLabel->adjustSize();
+    dizzyLabel->hide();  // 初始隐藏
+
+    //错位
+    hintLabel = new QLabel("START HINT! The connectable blocks will be highlighted with a shadow.", this);
+    hintLabel->setStyleSheet("background-color: rgba(167, 126, 183, 230);"   /* 茈藐 */
+                              "color: rgba(148, 213, 221, 255);"          /* 清水蓝 */
+                              "font-weight: 600;font-size: 24px;"
+                              " padding: 14px; border-radius: 5px;");
+    hintLabel->adjustSize();
+    hintLabel->setAlignment(Qt::AlignCenter);
+    hintLabel->move((width() - hintLabel->width()) / 2, (height() - hintLabel->height()) / 2);
+    hintLabel->hide();  // 初始隐藏
+
+    //瞬移
+    flashLabel = new QLabel("5s Teleportation", this);
+    flashLabel->setStyleSheet("background-color: rgba(103, 185, 144, 230);"   /* 奇境森林 */
+                             "color: rgba(246, 249, 228, 255);"          /* 帧白 */
+                             "font-weight: 600;font-size: 24px;"
+                             " padding: 14px; border-radius: 5px;");
+    flashLabel->adjustSize();
+    flashLabel->setAlignment(Qt::AlignCenter);
+    flashLabel->move((width() - flashLabel->width()) / 2, (height() - flashLabel->height()) / 2);
+    flashLabel->hide();  // 初始隐藏
 
 
     //退出
@@ -152,6 +194,7 @@ MainWindow::MainWindow(QWidget *parent, int row, int col, int numTypes
     moveTimer = new QTimer(this);
     connect(moveTimer, &QTimer::timeout, this, &MainWindow::tryMove);
     connect(moveTimer, &QTimer::timeout, this, &MainWindow::tryMove2);
+    connect(moveTimer, &QTimer::timeout, this, &MainWindow::canHint);
     moveTimer->start(20); // ~60fps
 
     mapInit();
@@ -205,33 +248,62 @@ void MainWindow::keyPressEvent(QKeyEvent *event){
         dlg.exec();  // 模态运行
     }
 
-    if(characterSet){//使用角色时
-
+    if(characterSet && !freeze1){//使用角色时
         playerCharacter::Direction curDir1 = player1 -> getDir();
-        if (event->key() == Qt::Key_W) {
-            wPressed = true;
-            if( curDir1 == playerCharacter::Up && selTempRow1 != -1){
-                linkStart(selTempRow1, selTempCol1);
-            }
 
-        } else if (event->key() == Qt::Key_A) {
-            aPressed = true;
-            if( curDir1 == playerCharacter::Left && selTempRow1 != -1){
-                linkStart(selTempRow1, selTempCol1);
-            }
+        //dizzy道具
+        if(!dizzy1){
+            if (event->key() == Qt::Key_W) {
+                wPressed = true;
+                if( curDir1 == playerCharacter::Up && selTempRow1 != -1){
+                    linkStart(selTempRow1, selTempCol1);
+                }
 
-        } else if (event->key() == Qt::Key_S) {
-            sPressed = true;
-            if( curDir1 == playerCharacter::Down && selTempRow1 != -1){
-                linkStart(selTempRow1, selTempCol1);
-            }
+            } else if (event->key() == Qt::Key_A) {
+                aPressed = true;
+                if( curDir1 == playerCharacter::Left && selTempRow1 != -1){
+                    linkStart(selTempRow1, selTempCol1);
+                }
 
-        } else if (event->key() == Qt::Key_D) {
-            dPressed = true;
-            if( curDir1 == playerCharacter::Right && selTempRow1 != -1){
-                linkStart(selTempRow1, selTempCol1);
-            }
+            } else if (event->key() == Qt::Key_S) {
+                sPressed = true;
+                if( curDir1 == playerCharacter::Down && selTempRow1 != -1){
+                    linkStart(selTempRow1, selTempCol1);
+                }
 
+            } else if (event->key() == Qt::Key_D) {
+                dPressed = true;
+                if( curDir1 == playerCharacter::Right && selTempRow1 != -1){
+                    linkStart(selTempRow1, selTempCol1);
+                }
+
+            }
+        }else{
+            if (event->key() == Qt::Key_W) {
+                sPressed = true;
+                if( curDir1 == playerCharacter::Down && selTempRow1 != -1){
+                    linkStart(selTempRow1, selTempCol1);
+                }
+
+            } else if (event->key() == Qt::Key_A) {
+                dPressed = true;
+                if( curDir1 == playerCharacter::Right && selTempRow1 != -1){
+                    linkStart(selTempRow1, selTempCol1);
+                }
+
+            } else if (event->key() == Qt::Key_S) {
+                wPressed = true;
+                if( curDir1 == playerCharacter::Up && selTempRow1 != -1){
+                    linkStart(selTempRow1, selTempCol1);
+                }
+
+            } else if (event->key() == Qt::Key_D) {
+                aPressed = true;
+                if( curDir1 == playerCharacter::Left && selTempRow1 != -1){
+                    linkStart(selTempRow1, selTempCol1);
+                }
+
+            }
         }
 
         if(event->key() == Qt::Key_Q){//取消选择
@@ -245,32 +317,58 @@ void MainWindow::keyPressEvent(QKeyEvent *event){
     }
 
     //双角色
-    if(doubleCharacter){
+    if(doubleCharacter && !freeze2){
         playerCharacter::Direction curDir2 = player2 -> getDir();
-        if (event->key() == Qt::Key_Up) {
-            upPressed = true;
-            if( curDir2 == playerCharacter::Up && selTempRow2 != -1){
-                linkStart2(selTempRow2, selTempCol2);
-            }
+        if(!dizzy2){
+            if (event->key() == Qt::Key_Up) {
+                upPressed = true;
+                if( curDir2 == playerCharacter::Up && selTempRow2 != -1){
+                    linkStart2(selTempRow2, selTempCol2);
+                }
 
-        } else if (event->key() == Qt::Key_Left) {
-            leftPressed = true;
-            if( curDir2 == playerCharacter::Left && selTempRow2 != -1){
-                linkStart2(selTempRow2, selTempCol2);
-            }
+            } else if (event->key() == Qt::Key_Left) {
+                leftPressed = true;
+                if( curDir2 == playerCharacter::Left && selTempRow2 != -1){
+                    linkStart2(selTempRow2, selTempCol2);
+                }
 
-        } else if (event->key() == Qt::Key_Right) {
-            rightPressed = true;
-            if( curDir2 == playerCharacter::Right && selTempRow2 != -1){
-                linkStart2(selTempRow2, selTempCol2);
-            }
+            } else if (event->key() == Qt::Key_Right) {
+                rightPressed = true;
+                if( curDir2 == playerCharacter::Right && selTempRow2 != -1){
+                    linkStart2(selTempRow2, selTempCol2);
+                }
 
-        } else if (event->key() == Qt::Key_Down) {
-            downPressed = true;
-            if( curDir2 == playerCharacter::Down && selTempRow2 != -1){
-                linkStart2(selTempRow2, selTempCol2);
+            } else if (event->key() == Qt::Key_Down) {
+                downPressed = true;
+                if( curDir2 == playerCharacter::Down && selTempRow2 != -1){
+                    linkStart2(selTempRow2, selTempCol2);
+                }
             }
+        }else{
+            if (event->key() == Qt::Key_Up) {
+                downPressed = true;
+                if( curDir2 == playerCharacter::Down && selTempRow2 != -1){
+                    linkStart2(selTempRow2, selTempCol2);
+                }
 
+            } else if (event->key() == Qt::Key_Left) {
+                rightPressed = true;
+                if( curDir2 == playerCharacter::Right && selTempRow2 != -1){
+                    linkStart2(selTempRow2, selTempCol2);
+                }
+
+            } else if (event->key() == Qt::Key_Right) {
+                leftPressed = true;
+                if( curDir2 == playerCharacter::Left && selTempRow2 != -1){
+                    linkStart2(selTempRow2, selTempCol2);
+                }
+
+            } else if (event->key() == Qt::Key_Down) {
+                upPressed = true;
+                if( curDir2 == playerCharacter::Up && selTempRow2 != -1){
+                    linkStart2(selTempRow2, selTempCol2);
+                }
+            }
         }
 
         if(event->key() == Qt::Key_M){//取消选择
@@ -287,25 +385,49 @@ void MainWindow::keyPressEvent(QKeyEvent *event){
 void MainWindow::keyReleaseEvent(QKeyEvent *event)
 {
     if(characterSet){
-        if (event->key() == Qt::Key_W) {
-            wPressed = false;
-        } else if (event->key() == Qt::Key_A) {
-            aPressed = false;
-        } else if (event->key() == Qt::Key_S) {
-            sPressed = false;
-        } else if (event->key() == Qt::Key_D) {
-            dPressed = false;
+        if(!dizzy1){
+            if (event->key() == Qt::Key_W) {
+                wPressed = false;
+            } else if (event->key() == Qt::Key_A) {
+                aPressed = false;
+            } else if (event->key() == Qt::Key_S) {
+                sPressed = false;
+            } else if (event->key() == Qt::Key_D) {
+                dPressed = false;
+            }
+        }else{
+            if (event->key() == Qt::Key_W) {
+                sPressed = false;
+            } else if (event->key() == Qt::Key_A) {
+                dPressed = false;
+            } else if (event->key() == Qt::Key_S) {
+                wPressed = false;
+            } else if (event->key() == Qt::Key_D) {
+                aPressed = false;
+            }
         }
     }
     if(doubleCharacter){
-        if (event->key() == Qt::Key_Up) {
-            upPressed = false;
-        } else if (event->key() == Qt::Key_Left) {
-            leftPressed = false;
-        } else if (event->key() == Qt::Key_Down) {
-            downPressed = false;
-        } else if (event->key() == Qt::Key_Right) {
-            rightPressed = false;
+        if(!dizzy2){
+            if (event->key() == Qt::Key_Up) {
+                upPressed = false;
+            } else if (event->key() == Qt::Key_Left) {
+                leftPressed = false;
+            } else if (event->key() == Qt::Key_Down) {
+                downPressed = false;
+            } else if (event->key() == Qt::Key_Right) {
+                rightPressed = false;
+            }
+        }else{
+            if (event->key() == Qt::Key_Up) {
+                downPressed = false;
+            } else if (event->key() == Qt::Key_Left) {
+                rightPressed = false;
+            } else if (event->key() == Qt::Key_Down) {
+                upPressed = false;
+            } else if (event->key() == Qt::Key_Right) {
+                leftPressed = false;
+            }
         }
     }
 
@@ -336,6 +458,20 @@ void MainWindow::mousePressEvent(QMouseEvent *event) {
                 update();
             }
         }
+    }
+
+    if(characterSet && flash && !doubleCharacter){
+        // 鼠标像素坐标
+        QPointF pixel = event->position();
+        QPointF logic = pixelToLogical(pixel);
+        if(event->button() == Qt::LeftButton){
+            if (!std::isnan(logic.x())) {//是否有效坐标
+                flashMove(logic);
+            } else {
+                qDebug() << "点击在绘制区域外";
+            }
+        }
+
     }
 
     if(event->button() == Qt::RightButton){//右键取消
@@ -476,6 +612,14 @@ void MainWindow::mapInit(){
                 toolNum--;
             }
     }
+    //清除双人时候的flash道具（-4）
+    if(doubleCharacter){
+        for(int i = 0;allTools[3] > 0; i++){
+            int add = i%6;
+            allTools[add] += 1;
+            allTools[3]--;
+        }
+    }
     //填入道具
     for (int t = 0; t < 6; ++t) {
         for (int k = 0; k < allTools[t]; ++k) {
@@ -593,6 +737,7 @@ void MainWindow::paintEvent(QPaintEvent *event)
                 painter.drawPixmap(rect, toolPath);//覆盖上图片
             }
 
+            //角色1
             if (characterSet && r == selTempRow1 && c == selTempCol1) {
                 QColor overlay(100, 100, 100, 100); // RGBA，alpha=120 半透明
                 painter.fillRect(rect, overlay);
@@ -619,18 +764,24 @@ void MainWindow::paintEvent(QPaintEvent *event)
                 QColor overlay(100, 100, 100, 140); // RGBA，alpha=120 半透明
                 painter.fillRect(rect, overlay);
             }
+
+            //角色1
+            if (canFirstClicked && r == canLinkRow1 && c == canLinkCol1) {
+                QColor overlay(100, 100, 100, 140); // RGBA，alpha=120 半透明
+                painter.fillRect(rect, overlay);
+            }
+            if (canSecondClicked && r == canLinkRow2 && c == canLinkCol2) {
+                QColor overlay(100, 100, 100, 140); // RGBA，alpha=120 半透明
+                painter.fillRect(rect, overlay);
+            }
         }
     }
-
-    // QImage img(":/images/Images/Player/down.png");
-    // QRectF targetRect(0, 0, 0.8, 0.8); // 浮点矩形
-    // painter.drawImage(targetRect, img);
 
     painter.restore();
     if(characterSet){
         // 绘制 player（将逻辑坐标变换到像素）
-        player1->draw(&painter, t);
-        if(doubleCharacter) player2->draw(&painter, t);
+        player1->draw(&painter, t, freeze1);
+        if(doubleCharacter) player2->draw(&painter, t, freeze2);
     }
 
 
@@ -898,7 +1049,7 @@ void MainWindow::linkStart(int r,int c){
             firstClicked = false;
             board[r][c] = 0;
 
-            useTool(toolNum);
+            useTool(toolNum, 1);
         }
 
         update();
@@ -946,6 +1097,11 @@ void MainWindow::linkStart(int r,int c){
                 firstClicked2 = false;
                 secondClicked2 = false;
                 match2 = false;
+                //帮助hint归零
+                canLinkRow1 = canLinkCol1 = canLinkRow2 = canLinkCol2 = -1;
+                canFirstClicked = false;
+                canSecondClicked = false;
+                canMatch = false;
 
                 path.clear();
                 update();
@@ -975,7 +1131,6 @@ void MainWindow::linkStart(int r,int c){
 }
 
 void MainWindow::linkStart2(int r,int c){
-
     if(r < 1 || r > row || c < 1 || c > col ) return;
     if(board[r][c] == 0) return;
 
@@ -991,7 +1146,7 @@ void MainWindow::linkStart2(int r,int c){
             firstClicked2 = false;
             board[r][c] = 0;
 
-            useTool(toolNum);
+            useTool(toolNum, 2);
         }
 
         update();
@@ -1038,6 +1193,11 @@ void MainWindow::linkStart2(int r,int c){
                 firstClicked = false;
                 secondClicked = false;
                 match = false;
+                //帮助hint归零
+                canLinkRow1 = canLinkCol1 = canLinkRow2 = canLinkCol2 = -1;
+                canFirstClicked = false;
+                canSecondClicked = false;
+                canMatch = false;
 
                 path2.clear();
                 update();
@@ -1178,12 +1338,29 @@ void MainWindow::checkGameFinished(){
         success = true;
 
         gameTimer->stop();
-        QMessageBox::StandardButton reply;
-        reply = QMessageBox::information(this,
-                                         "胜利",
-                                         "Elaina向通关的你比了个心🥰",
-                                         QMessageBox::Ok);  // 只有一个按钮 OK
+        // 创建一个QMessageBox对象
+        QMessageBox msgBox;
+        msgBox.setWindowTitle("胜利");
+        msgBox.setText("Elaina向通关的你比了个心🥰");
+        msgBox.setStandardButtons(QMessageBox::Ok);
 
+
+        if(doubleCharacter){
+            int s1 = scoreboard->getScore();
+            int s2 = scoreboard->getScore2();
+            if(s1 == s2){
+                msgBox.setWindowTitle("平局");
+                msgBox.setText("Elina拉着大家一起开心地开始野餐~");
+            }else if(s1 > s2){
+                msgBox.setWindowTitle("Player1 Win!");
+                msgBox.setText("Elaina送了Player1一朵胜利的花花🌸");
+            }else{
+                msgBox.setWindowTitle("Player2 Win!");
+                msgBox.setText("Elaina送了Player2一朵胜利的花花🌸");
+            }
+        }
+
+        QMessageBox::StandardButton reply = static_cast<QMessageBox::StandardButton>(msgBox.exec());
         if (reply == QMessageBox::Ok) {
             emit backToPrep();
             combo = 0;
@@ -1332,7 +1509,7 @@ QVector<QPoint> MainWindow::findLinkPath(
 
 
 //角色移动
-void MainWindow::tryMove(){
+void MainWindow::tryMove(){  
     // 1) 计算方向向量 (逻辑单位)
     double vx = 0.0, vy = 0.0;
     if (wPressed) vy -= 1.0;
@@ -1418,7 +1595,7 @@ void MainWindow::tryMove2(){
 
 
 //道具实现
-void MainWindow::useTool(int Num){
+void MainWindow::useTool(int Num, int playerNum){
     switch(Num){
     case -1:secDelayTool();
         break;
@@ -1428,9 +1605,9 @@ void MainWindow::useTool(int Num){
         break;
     case -4:flashTool();
         break;
-    case -5:freezeTool();
+    case -5:freezeTool(playerNum);
         break;
-    case -6:dizzyTool();
+    case -6:dizzyTool(playerNum);
         break;
     }
 
@@ -1440,10 +1617,8 @@ void MainWindow::useTool(int Num){
 void MainWindow::secDelayTool(){
     remainingTime += 30;
     delayLabel->show();
-    QTimer::singleShot(800, this, [=]() {// 延时
+    QTimer::singleShot(1000, this, [=]() {// 延时
         delayLabel -> close();
-
-        qDebug() << "500ms later";
     });
 
 }
@@ -1479,7 +1654,7 @@ void MainWindow::shuffleTool(){
     }
 
     shuffleLabel->show();
-    QTimer::singleShot(800, this, [=]() {// 延时
+    QTimer::singleShot(1000, this, [=]() {// 延时
         shuffleLabel -> close();
 
         qDebug() << "500ms later";
@@ -1489,17 +1664,234 @@ void MainWindow::shuffleTool(){
 }
 
 void MainWindow::hintTool(){
-    return;
+    hintLabel->show();
+    QTimer::singleShot(1000, this, [=]() {// 延时
+        hintLabel -> close();
+    });
+
+    startHint = true;
+
+    QTimer::singleShot(10000, this, [this]{
+        //帮助hint归零
+        canLinkRow1 = canLinkCol1 = canLinkRow2 = canLinkCol2 = -1;
+        canFirstClicked = false;
+        canSecondClicked = false;
+        canMatch = false;
+
+        startHint = false;
+    });
 }
 
 void MainWindow::flashTool(){
-    return;
+    flashLabel->show();
+    QTimer::singleShot(1000, this, [=]() {// 延时
+        flashLabel -> close();
+    });
+
+    flash = true;
+
+    QTimer::singleShot(5000, this, [this]{
+        flash = false;
+    });
 }
 
-void MainWindow::freezeTool(){
-    return;
+void MainWindow::freezeTool(int playerNum){
+    if(playerNum == 1){
+        freezeLabel->setText("Player1 unleashed a freezing spell on Player2!");
+        freezeLabel->adjustSize();
+        freezeLabel->setAlignment(Qt::AlignCenter);
+        freezeLabel->move((width() - freezeLabel->width()) / 2, (height() - freezeLabel->height()) / 2);
+
+        freezeLabel->show();
+        QTimer::singleShot(1000, this, [=]() {// 延时
+            freezeLabel -> close();
+        });
+
+        freeze2 = true;
+
+        QTimer::singleShot(3000, this, [this]{
+            freeze2 = false;
+        });
+    }else{
+        freezeLabel->setText("Player2 unleashed a freezing spell on Player1!");
+        freezeLabel->adjustSize();
+        freezeLabel->setAlignment(Qt::AlignCenter);
+        freezeLabel->move((width() - freezeLabel->width()) / 2, (height() - freezeLabel->height()) / 2);
+
+        freezeLabel->show();
+        QTimer::singleShot(1000, this, [=]() {// 延时
+            freezeLabel -> close();
+        });
+
+        freeze1 = true;
+
+        QTimer::singleShot(3000, this, [this]{
+            freeze1 = false;
+        });
+    }
 }
 
-void MainWindow::dizzyTool(){
-    return;
+void MainWindow::dizzyTool(int playerNum){
+    if(playerNum == 1){
+        dizzyLabel->setText("Player1 has cast the Dizzy Spell on Player2!");
+        dizzyLabel->adjustSize();
+        dizzyLabel->setAlignment(Qt::AlignCenter);
+        dizzyLabel->move((width() - dizzyLabel->width()) / 2, (height() - dizzyLabel->height()) / 2);
+
+        dizzyLabel->show();
+        QTimer::singleShot(1000, this, [=]() {// 延时
+            dizzyLabel -> close();
+        });
+
+        dizzy2 = true;
+
+        QTimer::singleShot(10000, this, [this]{
+            dizzy2 = false;
+        });
+    }else{
+        dizzyLabel->setText("Player2 has cast the Dizzy Spell on Player1!");
+        dizzyLabel->adjustSize();
+        dizzyLabel->setAlignment(Qt::AlignCenter);
+        dizzyLabel->move((width() - dizzyLabel->width()) / 2, (height() - dizzyLabel->height()) / 2);
+
+        dizzyLabel->show();
+        QTimer::singleShot(1000, this, [=]() {// 延时
+            dizzyLabel -> close();
+        });
+
+        dizzy1 = true;
+
+        QTimer::singleShot(10000, this, [this]{
+            dizzy1 = false;
+        });
+    }
+
+}
+
+
+
+//Hint函数辅助函数
+void MainWindow::canHint(){
+    if(!startHint){
+        return;//未开始直接返回，减少调用
+    }
+
+    if(canMatch){
+        return;//已找到但还未选择，返回
+    }
+
+    for (int r = 1; r < row + 1; ++r) {
+        for (int c = 1; c < col + 1; ++c) {//清除上一次残留
+            canLinkCol1 = canLinkRow1 = -1;
+            canFirstClicked = false;
+            tempLink(r, c);
+            if(!canFirstClicked) continue;//已确定本方块不可以
+
+            for (int i = r; i < row + 1; ++i) {
+                for (int j = c; j < col + 1; ++j) {
+                    tempLink(i, j);
+                    if(canMatch){
+                        return;
+                    }
+                }
+            }
+        }
+    }
+
+    if(!canMatch){
+        canLinkCol1 = canLinkRow1 = -1;
+        canFirstClicked = false;
+
+        return;
+    }
+
+}
+
+void MainWindow::tempLink(int r, int c){
+    if(r < 1 || r > row || c < 1 || c > col ) return;
+    if(board[r][c] == 0) return;
+    if(!detect(r,c)){
+        return;//不可能连接
+    }
+
+    if(!canFirstClicked){//如果不存在已经选中的图标
+        canLinkRow1 = r;
+        canLinkCol1 = c;
+        canFirstClicked = true;
+
+        if(board[r][c] < 0){//跳过道具
+            return;
+        }
+
+    }else{
+        if(secondClicked2) return;//已选中
+
+        if(r == canLinkRow1 && c == canLinkCol1){//排除重复同一个
+            return;
+        }
+
+        if(board[r][c] != board[canLinkRow1][canLinkCol1]){
+            return;//不是同一个格子
+        }
+
+        QPoint a(canLinkCol1, canLinkRow1);
+        QPoint b(c, r);
+
+        canLinkPath = findLinkPath( a, b, board, maxTurns);
+
+        if(!canLinkPath.isEmpty()){
+            canMatch = true;//配对成功
+
+            canLinkRow2 = r;
+            canLinkCol2 = c;
+            canSecondClicked = true;
+            update();
+
+        }else{
+            return;
+        }
+
+    }
+}
+
+bool MainWindow::detect(int r, int c){
+    //由于画图时本就上下拓宽一格，于是不用担心越界
+    if(r < 1 || r > row || c < 1 || c > col ) return false;//基本不可能出现
+
+    if(board[r-1][c] != 0 && board[r+1][c] != 0 && board[r][c-1] != 0 && board[r][c+1] != 0){
+        return false;
+    }else{
+        return true;
+    }
+
+}
+
+
+void MainWindow::flashMove(QPointF p){
+    int c = (int)std::floor(p.x());
+    int r = (int)std::floor(p.y());
+    qDebug() << "logic:" << p << " -> row,col =" << r << c;
+
+    if(r < 1 || r > row || c < 1 || c > col ){
+        player1->setPosition(p);
+    }else{
+        if(!detect(r, c)){
+            return;
+        }
+
+        if(board[r][c] == 0){
+            player1->setPosition(p);
+        }else{
+            if(board[r-1][c] == 0){
+                player1->setPosition(QPointF(c + 0.5, r - 1 + 0.5));
+            }else if(board[r+1][c] == 0){
+                player1->setPosition(QPointF(c + 0.5, r + 1 + 0.5));
+            }else if(board[r][c-1] == 0){
+                player1->setPosition(QPointF(c - 1 + 0.5, r + 0.5));
+            }else if(board[r][c+1] == 0){
+                player1->setPosition(QPointF(c + 1 + 0.5, r + 0.5));
+            }
+        }
+    }
+
 }

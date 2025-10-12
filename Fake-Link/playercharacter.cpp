@@ -86,7 +86,7 @@ void playerCharacter::Move(double dx, double dy, double leftLimit, double rightL
 
 }
 
-void playerCharacter::draw(QPainter *painter, const QTransform &logicToScene)
+void playerCharacter::draw(QPainter *painter, const QTransform &logicToScene, bool freeze)
 {
     //qDebug() << "draw Player";
     QImage *current = nullptr;
@@ -105,8 +105,34 @@ void playerCharacter::draw(QPainter *painter, const QTransform &logicToScene)
 
     QRectF targetRect(x - 0.2, y - 0.2, 0.8, 0.8); // 浮点矩形
     painter->drawImage(targetRect, *current);
-}
 
+    if(freeze){//冰冻状态绘画
+        painter->save();
+
+        // 参数可调：颜色（R,G,B），以及各处透明度
+        QColor base(135, 206, 250);          // 水蓝
+        QColor inner = base; inner.setAlpha(200); // 中间不透明一些
+        QColor mid   = base; mid.setAlpha(90);    // 中间向外过渡
+        QColor outer = base; outer.setAlpha(0);   // 最外层透明
+
+        QRectF glowRect = targetRect;
+        QPointF center = glowRect.center();
+        qreal radius = qMax(glowRect.width(), glowRect.height()) * 0.6;
+
+        QRadialGradient grad(center, radius);
+        grad.setColorAt(0.0, inner);
+        grad.setColorAt(0.6, mid);
+        grad.setColorAt(1.0, outer);
+
+        painter->setPen(Qt::NoPen);
+        painter->setBrush(grad);
+
+        // 画一个填充的矩形
+        painter->drawRect(glowRect);
+
+        painter->restore();
+    }
+}
 
 QPoint playerCharacter::selectTips(const QVector<QVector<int>> &board){
     double midX = x + pixwid/2;
