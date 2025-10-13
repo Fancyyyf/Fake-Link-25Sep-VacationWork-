@@ -32,6 +32,8 @@ signals:
 
     void loadStart();//发出载入文件的信号
 
+    void receiveLoadSetsChange();
+
 private slots:
     void on_gameStartButton_clicked();
 

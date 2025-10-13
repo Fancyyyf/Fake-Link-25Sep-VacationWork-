@@ -54,6 +54,8 @@ signals:
 
     void receiveLoad();//接受载入信号
 
+    void sendLoadSet();
+
 
 protected:
     void keyPressEvent(QKeyEvent *event) override;

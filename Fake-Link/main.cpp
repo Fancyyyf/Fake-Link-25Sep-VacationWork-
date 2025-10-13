@@ -10,10 +10,29 @@
 #include <QElapsedTimer>
 #include <QWidget>
 #include <QLabel>
+#include <QStyleFactory>
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
+    // 固定使用 Fusion 样式（不受系统主题变化影响）,避免深色主题下字体变白
+    QApplication::setStyle(QStyleFactory::create("Fusion"));
+
+    // 创建固定调色板（浅色主题）
+    QPalette palette;
+    palette.setColor(QPalette::Window, QColor(255, 255, 255));
+    palette.setColor(QPalette::WindowText, QColor(0, 0, 0));
+    palette.setColor(QPalette::Base, QColor(240, 240, 240));
+    palette.setColor(QPalette::AlternateBase, QColor(255, 255, 255));
+    palette.setColor(QPalette::Text, QColor(0, 0, 0));
+    palette.setColor(QPalette::Button, QColor(240, 240, 240));
+    palette.setColor(QPalette::ButtonText, QColor(0, 0, 0));
+    palette.setColor(QPalette::Highlight, QColor(76, 163, 224));
+    palette.setColor(QPalette::HighlightedText, QColor(255, 255, 255));
+
+    QApplication::setPalette(palette);
+
+
     playerUI *prep = new playerUI;
 
     gameSettings gset = prep->preSets();
@@ -51,6 +70,8 @@ int main(int argc, char *argv[])
     QObject::connect(prep, &playerUI::setChangePlayerUI, game, &MainWindow::setChangeMainWindow);
     //连接载入存档
     QObject::connect(prep, &playerUI::loadStart, game, &MainWindow::receiveLoad);
+
+    QObject::connect(game, &MainWindow::sendLoadSet, prep, &playerUI::receiveLoadSetsChange);
 
     //界面切换
     QObject::connect(prep, &playerUI::gameStart, [=]() {

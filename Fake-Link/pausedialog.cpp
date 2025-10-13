@@ -51,8 +51,24 @@ void pauseDialog::paintEvent(QPaintEvent* event){
     painter.drawPixmap(this->rect(), pix);
 }
 
+void pauseDialog::keyPressEvent(QKeyEvent *event){
+    if (event->key() == Qt::Key_Escape) {
+        on_backToGameButton_clicked();
+    }
+}
+
+void pauseDialog::closeEvent(QCloseEvent *event){
+    on_backToGameButton_clicked();
+}
+
 void pauseDialog::on_saveButton_clicked()
 {
     emit sendSave();
+}
+
+
+void pauseDialog::on_loadButton_clicked()
+{
+    emit dialogLoad();
 }
 

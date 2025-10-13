@@ -260,6 +260,8 @@ void MainWindow::keyPressEvent(QKeyEvent *event){
 
         connect(&dlg, &pauseDialog::sendSave, this, &MainWindow::saveLocal);
 
+        connect(&dlg, &pauseDialog::dialogLoad, this, &MainWindow::sendLoadSet);
+
         dlg.exec();  // 模态运行
     }
 
@@ -533,6 +535,21 @@ QPixmap MainWindow::loadWithOpacity(const QString &path, qreal opacity, const QS
 }
 
 void MainWindow::mapInit(){
+    //加载最好成绩
+    QSettings settings("local.txt", QSettings::IniFormat);//随程序发布统一配置
+    settings.sync();
+
+    //添加空文件判断无存档
+    QStringList keys = settings.allKeys();
+    if (!keys.isEmpty()) {
+        int bestscore = settings.value("Info/BestScore", 0).toInt();
+        scoreboard->setBestScore(bestscore);
+    }
+
+    //计分板初始化
+    scoreboard->setScore(0);
+    scoreboard->setScore2(0);
+
     //board.clear();
     if (numTypes < 2) numTypes = 2; // 至少 3 种
     if (numTypes > 20) numTypes = 20; // 至多 20 种
@@ -663,7 +680,6 @@ void MainWindow::mapInit(){
     this->resize(s);
     update();
 }
-
 
 void MainWindow::paintEvent(QPaintEvent *event)
 {
@@ -903,7 +919,6 @@ QTransform MainWindow::computeLogicalToDeviceTransform() const{
                       b, d, 1);
 }
 
-
 QPointF MainWindow::pixelToLogical(const QPointF &pixel) const{
     QRect viewport;
     QRectF windowRect;
@@ -981,7 +996,6 @@ void MainWindow::setRecieved(){
 
     mapInit();
 }
-
 
 void MainWindow::setProtection(){
     if(maxTurns < 1 ) maxTurns = 1;
@@ -1108,10 +1122,10 @@ void MainWindow::linkStart(int r,int c){
                 secondClicked = false;
                 match = false;
                 //假如同时选中一个格子，先消除的才得分成功
-                selRow12 = selCol12 = selRow22 = selCol22 = -1;
-                firstClicked2 = false;
-                secondClicked2 = false;
-                match2 = false;
+                // selRow12 = selCol12 = selRow22 = selCol22 = -1;
+                // firstClicked2 = false;
+                // secondClicked2 = false;
+                // match2 = false;
                 //帮助hint归零
                 canLinkRow1 = canLinkCol1 = canLinkRow2 = canLinkCol2 = -1;
                 canFirstClicked = false;
@@ -1204,10 +1218,10 @@ void MainWindow::linkStart2(int r,int c){
                 secondClicked2 = false;
                 match2 = false;
                 //假如同时选中一个格子，先消除的才得分成功
-                selRow1 = selCol1 = selRow2 = selCol2 = -1;
-                firstClicked = false;
-                secondClicked = false;
-                match = false;
+                // selRow1 = selCol1 = selRow2 = selCol2 = -1;
+                // firstClicked = false;
+                // secondClicked = false;
+                // match = false;
                 //帮助hint归零
                 canLinkRow1 = canLinkCol1 = canLinkRow2 = canLinkCol2 = -1;
                 canFirstClicked = false;
@@ -1351,6 +1365,7 @@ void MainWindow::checkGameFinished(){
     //qDebug() << allZero;
     if ((allZero && !firstClicked) || portal) {
         success = true;
+        int tempBestScore = scoreboard->getScore();
 
         gameTimer->stop();
         // 创建一个QMessageBox对象
@@ -1370,9 +1385,17 @@ void MainWindow::checkGameFinished(){
                 msgBox.setWindowTitle("Player1 Win!");
                 msgBox.setText("Elaina送了Player1一朵胜利的花花🌸");
             }else{
+                tempBestScore = scoreboard->getScore2();
                 msgBox.setWindowTitle("Player2 Win!");
                 msgBox.setText("Elaina送了Player2一朵胜利的花花🌸");
             }
+        }
+
+        if(tempBestScore > scoreboard->getBestScore()){
+            scoreboard->setBestScore(tempBestScore);
+            QSettings settings("local.txt", QSettings::IniFormat);
+            settings.setValue("Info/BestScore", scoreboard->getBestScore());
+
         }
 
         QMessageBox::StandardButton reply = static_cast<QMessageBox::StandardButton>(msgBox.exec());
@@ -1520,7 +1543,6 @@ QVector<QPoint> MainWindow::findLinkPath(
 
     return {};// 没有找到满足条件的路径
 }
-
 
 
 //角色移动
@@ -1784,7 +1806,6 @@ void MainWindow::dizzyTool(int playerNum){
 }
 
 
-
 //Hint函数辅助函数
 void MainWindow::canHint(){
     if(!startHint){
@@ -1897,6 +1918,8 @@ void MainWindow::flashMove(QPointF p){
         if(board[r][c] == 0){
             player1->setPosition(p);
         }else{
+            linkStart(r, c);
+
             if(board[r-1][c] == 0){
                 player1->setPosition(QPointF(c + 0.5, r - 1 + 0.5));
             }else if(board[r+1][c] == 0){
@@ -1911,7 +1934,6 @@ void MainWindow::flashMove(QPointF p){
 
 }
 
-//boxImages
 
 void MainWindow::saveLocal(){
     QSettings settings("local.txt", QSettings::IniFormat);
@@ -1974,6 +1996,7 @@ void MainWindow::saveLocal(){
     settings.setValue("Info/remainingTime", remainingTime);
     settings.setValue("Info/player1 score", scoreboard->getScore());
     settings.setValue("Info/player2 score", scoreboard->getScore2());
+    settings.setValue("Info/BestScore", scoreboard->getBestScore());
     settings.setValue("Info/player1 combo", combo);
     settings.setValue("Info/player2 combo", combo2);
     settings.setValue("Info/playerSpeed", playerSpeed);
@@ -1992,7 +2015,6 @@ void MainWindow::saveLocal(){
                          "Elaina会一直记得一起游戏的时光的喵😴",
                          QMessageBox::Ok);
 }
-
 
 
 void MainWindow::loadLocal(){
@@ -2057,12 +2079,14 @@ void MainWindow::loadLocal(){
     remainingTime = settings.value("Info/remainingTime", 0).toInt();
     int score1 = settings.value("Info/player1 score", 0).toInt();
     int score2 = settings.value("Info/player2 score", 0).toInt();
+    int bestscore = settings.value("Info/BestScore", 0).toInt();
     combo = settings.value("Info/player1 combo", 0).toInt();
     combo2 = settings.value("Info/player2 combo", 0).toInt();
     playerSpeed = settings.value("Info/playerSpeed", 1.0).toDouble();
 
     scoreboard->setScore(score1);
     scoreboard->setScore2(score2);
+    scoreboard->setBestScore(bestscore);
 
     //道具状态
     dizzy1 = settings.value("Status/dizzy1", false).toBool();
@@ -2078,6 +2102,12 @@ void MainWindow::loadLocal(){
 void MainWindow::loadMap(){
     if (numTypes < 2) numTypes = 2; // 至少 3 种
     if (numTypes > 20) numTypes = 20; // 至多 20 种
+
+    if(doubleCharacter){
+        scoreboard->changePlayers(2);
+    }else{
+        scoreboard->changePlayers(1);
+    }
 
     int maxNum = row * col / 2;
     if(numTypes > maxNum){//保护防止过度设置种类

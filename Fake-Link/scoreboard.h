@@ -21,11 +21,15 @@ public:
 
     int getScore2() const;
 
+    int getBestScore() const;
+
     void setScore(int s1);
 
     void setScore2(int s2);
 
     void changePlayers(int num);
+
+    void setBestScore(int bs);
 
 protected:
     void paintEvent(QPaintEvent *event) override;
@@ -33,6 +37,7 @@ protected:
 private:
     int score;
     int score2;
+    int bestScore;
 
     int playerNum;
 };

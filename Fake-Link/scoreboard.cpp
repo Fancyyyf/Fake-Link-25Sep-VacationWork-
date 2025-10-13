@@ -1,7 +1,10 @@
 #include "scoreboard.h"
 
 scoreBoard::scoreBoard(QWidget *parent, int num):
-    QWidget(parent),score(0), score2(0), playerNum(num){
+    QWidget(parent),score(0), score2(0),
+    bestScore(0),
+    playerNum(num)
+{
     this->resize(240, 160);
 }
 
@@ -27,6 +30,12 @@ void scoreBoard::setScore2(int s2) {
     update();
 }
 
+void scoreBoard::setBestScore(int bs){
+    bestScore = bs;
+    if (bestScore < 0) bestScore = 0; // 防止负分
+    update();
+}
+
 void scoreBoard::resetScore() {
     score = 0;
     score2 = 0;
@@ -39,6 +48,10 @@ int scoreBoard::getScore() const {
 
 int scoreBoard::getScore2() const {
     return score2;
+}
+
+int scoreBoard::getBestScore() const {
+    return bestScore;
 }
 
 void scoreBoard::changePlayers(int num){
@@ -82,7 +95,7 @@ void scoreBoard::paintEvent(QPaintEvent *event) {
 
     // 行 3
     QRect rect3(0, 10 + 3 * lineHeight, width(), lineHeight);
-    painter.drawText(rect3, Qt::AlignHCenter | Qt::AlignVCenter, "BEST: 1200");
+    painter.drawText(rect3, Qt::AlignHCenter | Qt::AlignVCenter, QString("Best: %1").arg(bestScore));
 }
 
 

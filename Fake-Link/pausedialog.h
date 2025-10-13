@@ -27,8 +27,13 @@ signals:
 
     void sendSave();
 
+    void dialogLoad();
+
 protected:
     void paintEvent(QPaintEvent *event) override;
+
+    void keyPressEvent(QKeyEvent *event) override;
+    void closeEvent(QCloseEvent *event) override;
 
 private slots:
     void on_backRequestButton_clicked();
@@ -36,6 +41,8 @@ private slots:
     void on_backToGameButton_clicked();
 
     void on_saveButton_clicked();
+
+    void on_loadButton_clicked();
 
 private:
     Ui::pauseDialog *ui;

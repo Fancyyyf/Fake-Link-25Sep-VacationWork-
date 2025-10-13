@@ -11,6 +11,7 @@ playerUI::playerUI(QWidget *parent)
 
     s = new Settings;
     connect(s, &Settings::setUpdated, this, &playerUI::setChangePlayerUI);
+    connect(this, &playerUI::receiveLoadSetsChange, this, &playerUI::on_loadButton_clicked);
 
     QPixmap pixmap(":/images/Images/ui/Title.png");
     ui->titleLabel->setPixmap(pixmap);
@@ -111,5 +112,4 @@ void playerUI::keyPressEvent(QKeyEvent* event){
         ui->refreshButton->clicked();
     }
 }
-
 
