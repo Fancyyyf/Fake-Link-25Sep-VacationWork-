@@ -53,6 +53,8 @@ MainWindow::MainWindow(QWidget *parent, int row, int col, int numTypes
 
     //接收到设置改变，需要重新生成地图
     connect(this, &MainWindow::setChangeMainWindow, this, &MainWindow::setRecieved);
+    //接收到载入存档，重新设置并修改地图
+    connect(this, &MainWindow::receiveLoad, this, &MainWindow::loadLocal);
 
     //设置按钮图标
     ui->quitButton->setFlat(true);  // 去掉立体边框
@@ -204,10 +206,20 @@ MainWindow::~MainWindow(){
     delete ui;
     delete tipLabel;
     delete gameTimer;
+    delete timerLabel;
     delete scoreboard;
     delete comboLabel;
+    delete comboLabel2;
     delete player1;
     delete player2;
+    delete moveTimer;
+
+    delete delayLabel;
+    delete shuffleLabel;
+    delete freezeLabel;
+    delete dizzyLabel;
+    delete hintLabel;
+    delete flashLabel;
 }
 
 void MainWindow::gameTimerStart(){
@@ -245,6 +257,9 @@ void MainWindow::keyPressEvent(QKeyEvent *event){
 
         //继续游戏
         connect(&dlg, &pauseDialog::backToGame, this, &MainWindow::gameContinue);
+
+        connect(&dlg, &pauseDialog::sendSave, this, &MainWindow::saveLocal);
+
         dlg.exec();  // 模态运行
     }
 
@@ -1894,4 +1909,191 @@ void MainWindow::flashMove(QPointF p){
         }
     }
 
+}
+
+//boxImages
+
+void MainWindow::saveLocal(){
+    QSettings settings("local.txt", QSettings::IniFormat);
+    settings.sync();
+    //地图背景
+    settings.setValue("background/num", backgroundNum);
+
+    //地图
+    settings.setValue("map/col", col);
+    settings.setValue("map/row", row);
+    settings.setValue("map/numTypes", numTypes);
+    settings.setValue("map/maxTurns", maxTurns);
+
+    //方格
+    settings.beginGroup("Board");
+    for (int i = 0; i < board.size(); ++i) {
+        QStringList rowList;
+        for (int val : board[i])
+            rowList << QString::number(val);
+        settings.setValue(QString("row%1").arg(i), rowList.join(","));
+    }
+
+    settings.setValue("ActualRows", board.size());
+    settings.setValue("ActualCols", board[0].size());
+    settings.endGroup();
+
+    QPointF p1 = player1->position();
+    QPointF p2 = player2->position();
+
+    //Player1
+    settings.setValue("Player1/firstClicked", firstClicked);
+    settings.setValue("Player1/secondClicked", secondClicked);
+    settings.setValue("Player1/match", match);
+    settings.setValue("Player1/selRow1", selRow1);
+    settings.setValue("Player1/selCol1", selCol1);
+    settings.setValue("Player1/selRow2", selRow2);
+    settings.setValue("Player1/selCol2", selCol2);
+    settings.setValue("Player1/posX", p1.x());
+    settings.setValue("Player1/posY", p1.y());
+
+    //Player2
+    settings.setValue("Player2/firstClicked2", firstClicked2);
+    settings.setValue("Player2/secondClicked2", secondClicked2);
+    settings.setValue("Player2/match2", match2);
+    settings.setValue("Player2/selRow12", selRow12);
+    settings.setValue("Player2/selCol12", selCol12);
+    settings.setValue("Player2/selRow22", selRow22);
+    settings.setValue("Player2/selCol22", selCol22);
+    settings.setValue("Player2/posX", p2.x());
+    settings.setValue("Player2/posY", p2.y());
+
+
+    //模式设置
+    settings.setValue("Model/characterSet", characterSet);
+    settings.setValue("Model/success", success);
+    settings.setValue("Model/portal", portal);
+    settings.setValue("Model/doubleCharacter", doubleCharacter);
+
+    //计时与计分
+    settings.setValue("Info/remainingTime", remainingTime);
+    settings.setValue("Info/player1 score", scoreboard->getScore());
+    settings.setValue("Info/player2 score", scoreboard->getScore2());
+    settings.setValue("Info/player1 combo", combo);
+    settings.setValue("Info/player2 combo", combo2);
+    settings.setValue("Info/playerSpeed", playerSpeed);
+
+
+    //道具状态
+    settings.setValue("Status/freeze1", freeze1);
+    settings.setValue("Status/freeze2", freeze2);
+    settings.setValue("Status/dizzy1", dizzy1);
+    settings.setValue("Status/dizzy2", dizzy2);
+    settings.setValue("Status/startHint", startHint);
+    settings.setValue("Status/flash", flash);
+
+    QMessageBox::information(this,
+                         "保存成功",
+                         "Elaina会一直记得一起游戏的时光的喵😴",
+                         QMessageBox::Ok);
+}
+
+
+
+void MainWindow::loadLocal(){
+    QSettings settings("local.txt", QSettings::IniFormat);
+
+    //地图背景
+    backgroundNum = settings.value("background/num", 0).toInt();
+
+    //地图
+    col = settings.value("map/col", 6).toInt();
+    row = settings.value("map/row", 6).toInt();
+    numTypes = settings.value("map/numTypes", 3).toInt();
+    maxTurns = settings.value("map/maxTurns", 2).toInt();
+
+    //方格
+    settings.beginGroup("Board");
+    int ActualRows = settings.value("ActualRows").toInt();
+    int ActualCols = settings.value("ActualCols").toInt();
+
+    for (int i = 0; i < ActualRows; ++i) {
+        QString line = settings.value(QString("row%1").arg(i)).toString();
+        QStringList nums = line.split(",");
+        for (int j = 0; j < nums.size(); ++j)
+            board[i][j] = nums[j].toInt();
+    }
+    settings.endGroup();
+
+    int x1 = 0,y1 = 0;
+    int x2 = 0,y2 = 0;
+
+    //Player1
+    firstClicked = settings.value("Player1/firstClicked", false).toBool();
+    secondClicked = settings.value("Player1/secondClicked", false).toBool();
+    match = settings.value("Player1/match", false).toBool();
+    selRow1 = settings.value("Player1/selRow1", -1).toInt();
+    selCol1 = settings.value("Player1/selCol1", -1).toInt();
+    selRow2 = settings.value("Player1/selRow2", -1).toInt();
+    selCol2 = settings.value("Player1/selCol2", -1).toInt();
+    x1 = settings.value("Player1/posX", 0).toDouble();
+    y1 = settings.value("Player1/posY", 0).toDouble();
+    player1->setPosition(QPointF(x1, y1));
+
+    //Player2
+    firstClicked2 = settings.value("Player2/firstClicked2", false).toBool();
+    secondClicked2 = settings.value("Player2/secondClicked2", false).toBool();
+    match2 = settings.value("Player2/match2", false).toBool();
+    selRow12 = settings.value("Player2/selRow12", -1).toInt();
+    selCol12 = settings.value("Player2/selCol12", -1).toInt();
+    selRow22 = settings.value("Player2/selRow22", -1).toInt();
+    selCol22 = settings.value("Player2/selCol22", -1).toInt();
+    x2 = settings.value("Player2/posX", 0).toDouble();
+    y2 = settings.value("Player2/posY", 0).toDouble();
+    player2->setPosition(QPointF(x2, y2));
+
+    //模式设置
+    characterSet = settings.value("Model/characterSet", false).toBool();
+    success = settings.value("Model/success", false).toBool();
+    portal = settings.value("Model/portal", false).toBool();
+    doubleCharacter = settings.value("Model/doubleCharacter", false).toBool();
+
+    //计时与计分
+    remainingTime = settings.value("Info/remainingTime", 0).toInt();
+    int score1 = settings.value("Info/player1 score", 0).toInt();
+    int score2 = settings.value("Info/player2 score", 0).toInt();
+    combo = settings.value("Info/player1 combo", 0).toInt();
+    combo2 = settings.value("Info/player2 combo", 0).toInt();
+    playerSpeed = settings.value("Info/playerSpeed", 1.0).toDouble();
+
+    scoreboard->setScore(score1);
+    scoreboard->setScore2(score2);
+
+    //道具状态
+    dizzy1 = settings.value("Status/dizzy1", false).toBool();
+    dizzy2 = settings.value("Status/dizzy2", false).toBool();
+    freeze1 = settings.value("Status/freeze1", false).toBool();
+    freeze2 = settings.value("Status/freeze2", false).toBool();
+    startHint = settings.value("Status/startHint", false).toBool();
+    flash = settings.value("Status/flash", false).toBool();
+
+    loadMap();
+}
+
+void MainWindow::loadMap(){
+    if (numTypes < 2) numTypes = 2; // 至少 3 种
+    if (numTypes > 20) numTypes = 20; // 至多 20 种
+
+    int maxNum = row * col / 2;
+    if(numTypes > maxNum){//保护防止过度设置种类
+        numTypes = maxNum;
+    }
+
+    playerSpeed = qMin(qMax(row, col), 8) *  0.02;
+    player1->setSpeed(playerSpeed);//速度设置
+    player2->setSpeed(playerSpeed);//速度设置
+
+    path.clear();
+    path2.clear();
+
+    //临时改一下再改回去，帮忙刷新背景
+    QSize s = this->size();
+    this->resize(s.width()+1, s.height()); // 先+1
+    this->resize(s);
+    update();
 }

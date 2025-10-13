@@ -21,6 +21,10 @@ public:
 
     int getScore2() const;
 
+    void setScore(int s1);
+
+    void setScore2(int s2);
+
     void changePlayers(int num);
 
 protected:

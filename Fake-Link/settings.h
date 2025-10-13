@@ -27,6 +27,8 @@ public:
 
     bool saveSets();
 
+    void loadSets(gameSettings s);
+
 protected:
     void paintEvent(QPaintEvent *event) override;
 

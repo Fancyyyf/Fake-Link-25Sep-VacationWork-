@@ -52,6 +52,7 @@ bool Settings::saveSets(){
     // 指定文件路径和格式
     // QSettings::IniFormat 表示保存为文本INI格式
     QSettings settings("config.txt", QSettings::IniFormat);
+    settings.sync();//若不存在自动创建
 
     QString pcol = ui->colEdit->text();
     QString prow = ui->rowEdit->text();
@@ -62,8 +63,6 @@ bool Settings::saveSets(){
         prow.toInt() < 2 || prow.toInt() > 20||
         pTurns.toInt() < 1 ||
         pnumTypes.toInt() > 20 || pnumTypes.toInt() < 2) return false;
-
-
 
     settings.setValue("block/col", pcol);
     settings.setValue("block/row", prow);
@@ -149,3 +148,27 @@ void Settings::keyPressEvent(QKeyEvent* event){
     }
 }
 
+void Settings::loadSets(gameSettings s){
+    QSettings settings("config.txt", QSettings::IniFormat);
+    settings.sync();//若不存在自动创建
+    gset = s;
+
+    settings.setValue("block/col", s.col);
+    settings.setValue("block/row", s.row);
+    settings.setValue("block/numTypes", s.numTypes);
+    settings.setValue("block/maxTurns", s.maxTurns);
+    settings.setValue("checkBox/character", s.character);
+    settings.setValue("checkBox/doubleCharacter", s.doubleCharacter);
+
+    ui->colEdit->setText(QString::number(gset.col));
+    ui->colEdit->setPlaceholderText("请输入列数");
+    ui->rowEdit->setText(QString::number(gset.row));
+    ui->rowEdit->setPlaceholderText("请输入行数");
+    ui->numTypeEdit->setText(QString::number(gset.numTypes));
+    ui->numTypeEdit->setPlaceholderText("请输入格子种类");
+    ui->turnsEdit->setText(QString::number(gset.maxTurns));
+    ui->turnsEdit->setPlaceholderText("请输入最大拐点数");
+
+    ui->characterBox->setChecked(gset.character);
+    ui->doubleCharacterBox->setChecked(gset.doubleCharacter);
+}

@@ -52,6 +52,8 @@ signals:
 
     void setChangeMainWindow();
 
+    void receiveLoad();//接受载入信号
+
 
 protected:
     void keyPressEvent(QKeyEvent *event) override;
@@ -122,6 +124,9 @@ protected:
 
     void flashMove(QPointF p);
 
+    void loadMap();
+
+
 private slots:
     void gameContinue();
 
@@ -133,14 +138,21 @@ private slots:
 
     void tryMove2();
 
+    //存档函数
+    void saveLocal();
+
+    void loadLocal();
+
 private:
     Ui::MainWindow *ui;
     int backgroundNum = 0;//第几张地图
     //以下是默认设置，后续可在设置中修改。行列与方块种类
     int col, row;
     int numTypes;
+    //拐点限制
+    int maxTurns;
 
-    //连连看
+    //连连看Player1
     bool firstClicked;//判断是否已经选中格子
     bool secondClicked;//选中第二个格子
     bool match;//判断是否配对成功
@@ -149,7 +161,7 @@ private:
 
     QVector<QVector<int>> board; // 地图，0 表示空格
 
-    QVector<QPixmap> boxImages;     // 连连看对象数组
+    QVector<QPixmap> boxImages;  // 连连看对象图片
 
     QLabel *tipLabel;//配对失败提示
 
@@ -158,8 +170,6 @@ private:
     bool success;//判断游戏结束
     bool portal;//一键通关的后门
 
-    //拐点限制
-    int maxTurns;
     QVector<QPoint> path;//寻找连接路径
 
     //倒计时

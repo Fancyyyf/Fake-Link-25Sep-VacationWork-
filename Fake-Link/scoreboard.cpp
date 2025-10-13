@@ -16,6 +16,17 @@ void scoreBoard::addScore2(int delta) {
     update();
 }
 
+void scoreBoard::setScore(int s1) {
+    score = s1;
+    if (score < 0) score = 0; // 防止负分
+    update();
+}
+void scoreBoard::setScore2(int s2) {
+    score2 = s2;
+    if (score2 < 0) score2 = 0; // 防止负分
+    update();
+}
+
 void scoreBoard::resetScore() {
     score = 0;
     score2 = 0;

@@ -47,7 +47,12 @@ int main(int argc, char *argv[])
 
     prep->show();//调出开始界面
 
+    //设置更改
     QObject::connect(prep, &playerUI::setChangePlayerUI, game, &MainWindow::setChangeMainWindow);
+    //连接载入存档
+    QObject::connect(prep, &playerUI::loadStart, game, &MainWindow::receiveLoad);
+
+    //界面切换
     QObject::connect(prep, &playerUI::gameStart, [=]() {
         prep->hide();
         game->show();

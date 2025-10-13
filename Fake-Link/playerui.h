@@ -30,15 +30,18 @@ signals:
 
     void setChangePlayerUI();
 
+    void loadStart();//发出载入文件的信号
+
 private slots:
     void on_gameStartButton_clicked();
 
-    void on_pushButton_clicked();
+    void on_quitButton_clicked();
 
     void on_setButton_clicked();
 
     void on_refreshButton_clicked();
 
+    void on_loadButton_clicked();
 
 protected:
     void paintEvent(QPaintEvent *event) override;

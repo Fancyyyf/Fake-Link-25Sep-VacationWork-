@@ -31,7 +31,7 @@ void playerUI::on_gameStartButton_clicked()
 }
 
 
-void playerUI::on_pushButton_clicked()
+void playerUI::on_quitButton_clicked()
 {
     this->close();
 }
@@ -58,6 +58,38 @@ void playerUI::on_setButton_clicked()
     }
 }
 
+void playerUI::on_loadButton_clicked()
+{
+    QSettings settings("local.txt", QSettings::IniFormat);//随程序发布统一配置
+    settings.sync();
+
+    //添加空文件判断无存档
+    QStringList keys = settings.allKeys();
+    if (keys.isEmpty()) {
+        QMessageBox::warning(this,
+                             "提示",
+                             "未检测到存档文件，请先和Elaina一起游玩吧😘~",
+                             QMessageBox::Ok);
+        return;
+    }
+
+    emit loadStart();//发出载入信号传给MainWindow
+
+    gset.col = settings.value("map/col", 6).toInt();
+    gset.row  = settings.value("map/row", 6).toInt();
+    gset.numTypes = settings.value("map/numTypes", 4).toInt();
+    gset.maxTurns = settings.value("map/maxTurns", 2).toInt();
+    gset.character = settings.value("Model/characterSet", false).toBool();
+    gset.doubleCharacter = settings.value("Model/doubleCharacter", false).toBool();
+
+    s->loadSets(gset);
+
+    QMessageBox::information(this,
+                         "载入成功",
+                         "Elaina想起来上一次的回忆啦~恰咯😜",
+                         QMessageBox::Ok);
+}
+
 
 void playerUI::on_refreshButton_clicked()
 {
@@ -79,3 +111,5 @@ void playerUI::keyPressEvent(QKeyEvent* event){
         ui->refreshButton->clicked();
     }
 }
+
+

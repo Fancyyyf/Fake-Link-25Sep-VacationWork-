@@ -50,3 +50,9 @@ void pauseDialog::paintEvent(QPaintEvent* event){
     QPixmap pix(":/images/Images/Background/quitBG.png");
     painter.drawPixmap(this->rect(), pix);
 }
+
+void pauseDialog::on_saveButton_clicked()
+{
+    emit sendSave();
+}
+

@@ -22,7 +22,10 @@ public:
 
 signals:
     void requestBackToPrep(); // 请求返回准备界面
+
     void backToGame();
+
+    void sendSave();
 
 protected:
     void paintEvent(QPaintEvent *event) override;
@@ -31,6 +34,8 @@ private slots:
     void on_backRequestButton_clicked();
 
     void on_backToGameButton_clicked();
+
+    void on_saveButton_clicked();
 
 private:
     Ui::pauseDialog *ui;
