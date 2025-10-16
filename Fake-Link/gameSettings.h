@@ -1,7 +1,7 @@
 #ifndef GAMESETTINGS_H
 #define GAMESETTINGS_H
 
-struct gameSettings{
+struct gameSettings {
     int row = 6;
     int col = 6;
     int numTypes = 4;

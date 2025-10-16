@@ -1,13 +1,13 @@
 #ifndef PLAYERUI_H
 #define PLAYERUI_H
 
-#include <QWidget>
+#include <QKeyEvent>
 #include <QSettings>
 #include <QString>
 #include <QPoint>
 #include <QPaintEvent>
 #include <QPainter>
-#include <QKeyEvent>
+#include <QWidget>
 
 #include "settings.h"
 
@@ -15,14 +15,14 @@ namespace Ui {
 class playerUI;
 }
 
-class playerUI : public QWidget
-{
+class playerUI : public QWidget {
     Q_OBJECT
 
 public:
     gameSettings preSets();
 
     explicit playerUI(QWidget *parent = nullptr);
+
     ~playerUI();
 
 signals:

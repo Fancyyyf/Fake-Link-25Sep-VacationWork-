@@ -1,9 +1,9 @@
 #ifndef SCOREBOARD_H
 #define SCOREBOARD_H
 
+#include <QFont>
 #include <QWidget>
 #include <QPainter>
-#include <QFont>
 
 class scoreBoard : public QWidget {
     Q_OBJECT

@@ -7,13 +7,11 @@
 #include <QPaintEvent>
 #include <QPainter>
 
-
 namespace Ui {
 class pauseDialog;
 }
 
-class pauseDialog : public QDialog
-{
+class pauseDialog : public QDialog {
     Q_OBJECT
 
 public:
@@ -33,6 +31,7 @@ protected:
     void paintEvent(QPaintEvent *event) override;
 
     void keyPressEvent(QKeyEvent *event) override;
+
     void closeEvent(QCloseEvent *event) override;
 
 private slots:

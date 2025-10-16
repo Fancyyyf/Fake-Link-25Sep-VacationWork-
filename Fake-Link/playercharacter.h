@@ -9,8 +9,7 @@
 #include <QVector>
 #include <QTransform>
 
-class playerCharacter:public QObject
-{
+class playerCharacter:public QObject {
     Q_OBJECT
 public:
     enum Direction { Up, Down, Left, Right };
@@ -29,8 +28,7 @@ public:
 
     double getSpeed() const {return speed;}
 
-    void setPosition(const QPointF &p)
-    {
+    void setPosition(const QPointF &p) {
         pixPos = p;
         x = pixPos.x();
         y = pixPos.y();
@@ -38,7 +36,7 @@ public:
 
     void setSpeed(double s) { speed = s; }
 
-    Direction getDir(){return dir;}
+    Direction getDir() { return dir; }
 
     QPoint selectTips(const QVector<QVector<int>> &board);
 

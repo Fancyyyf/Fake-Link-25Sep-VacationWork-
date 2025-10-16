@@ -3,15 +3,14 @@
 
 MainWindow::MainWindow(QWidget *parent, int row, int col, int numTypes
                        , bool character, int maxTurns, bool doubleCharacter)
-    : QMainWindow(parent)
-    , ui(new Ui::MainWindow)
-    , board(row + 2, QVector<int>(col + 2, 0)),//扩展上下限，便于寻路
+    : QMainWindow(parent),
+    ui(new Ui::MainWindow),
+    board(row + 2, QVector<int>(col + 2, 0)),//扩展上下限，便于寻路
     row(row),col(col),numTypes(numTypes),
     firstClicked(false), secondClicked(false), match(false),
     success(false),portal(false),
     characterSet(character),doubleCharacter(doubleCharacter),
     maxTurns(maxTurns),
-    combo(0),
     wPressed(false), aPressed(false), sPressed(false), dPressed(false),
     upPressed(false), leftPressed(false), downPressed(false), rightPressed(false),
     firstClicked2(false), secondClicked2(false), match2(false),
@@ -33,7 +32,7 @@ MainWindow::MainWindow(QWidget *parent, int row, int col, int numTypes
     this->setWindowIcon(QIcon(":/images/Images/Icon/mainWIndowIcon.png"));
 
     //地图背景设置
-    backgroundNum  = std::rand()%6;
+    backgroundNum  = std::rand() % 6;
     QString pathPix = QString(":/images/Images/Background/pixbg") + QString::number(1 + backgroundNum)+ QString(".png");
     QPixmap bg = loadWithOpacity(pathPix, 0.7, this->size());;
     bg = bg.scaled(this->size(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
@@ -46,7 +45,7 @@ MainWindow::MainWindow(QWidget *parent, int row, int col, int numTypes
     setWindowTitle("Fake Link");
 
     //加载图片
-    for(int i = 0;i < 20; i++){
+    for (int i = 0;i < 20; i++) {
         QString pathPix = QString(":/images/Images/Noita/noitablock") + QString::number(i + 1)+ QString(".png");
         boxImages.append(QPixmap(pathPix));
     }
@@ -63,8 +62,7 @@ MainWindow::MainWindow(QWidget *parent, int row, int col, int numTypes
     ui->quitButton->setIconSize(QSize(80, 80));              // 设置图标大小
 
 
-    //初始化失败弹窗
-    // 创建提示 QLabel
+    //初始化失败提示
     tipLabel = new QLabel("配对失败！Score -10", this);
     tipLabel->setStyleSheet("background-color: rgba(201,24,75,200);"   //凝珠红
                             "color: rgba(240, 240, 240, 255);"         //象牙白
@@ -76,11 +74,12 @@ MainWindow::MainWindow(QWidget *parent, int row, int col, int numTypes
 
     //初始化道具提示
     //延时
-    delayLabel = new QLabel("时间增加30s", this);
+    delayLabel = new QLabel("Time + 30s", this);
     delayLabel->setStyleSheet("background-color: rgba(173, 216, 230, 230); color: purple; "
-                              "font-weight: bold; padding: 14px; border-radius: 5px;");
+                              "font-weight: bold; font-size: 24px;"
+                              "padding: 14px; border-radius: 5px;");
     delayLabel->setAlignment(Qt::AlignCenter);
-    delayLabel->setFixedSize(120, 60);
+    delayLabel->adjustSize();
     delayLabel->move((width() - delayLabel->width()) / 2, (height() - delayLabel->height()) / 2);
     delayLabel->hide();  // 初始隐藏
 
@@ -91,7 +90,7 @@ MainWindow::MainWindow(QWidget *parent, int row, int col, int numTypes
                                 "font-weight: 600;font-size: 24px;"
                                 " padding: 14px; border-radius: 5px;");
     shuffleLabel->setAlignment(Qt::AlignCenter);
-    shuffleLabel->setFixedSize(160, 100);
+    shuffleLabel->adjustSize();
     shuffleLabel->move((width() - shuffleLabel->width()) / 2, (height() - shuffleLabel->height()) / 2);
     shuffleLabel->hide();  // 初始隐藏
 
@@ -135,14 +134,14 @@ MainWindow::MainWindow(QWidget *parent, int row, int col, int numTypes
     flashLabel->move((width() - flashLabel->width()) / 2, (height() - flashLabel->height()) / 2);
     flashLabel->hide();  // 初始隐藏
 
-
-    //退出
+    //退出主界面
     ui->quitButton->setFocusPolicy(Qt::NoFocus);//禁止退出按钮的焦点
     connect(ui->quitButton, &QPushButton::clicked, this, [this]() {
         //连接退出按钮与ESC
         QKeyEvent event(QEvent::KeyPress, Qt::Key_Escape, Qt::NoModifier);
         QCoreApplication::sendEvent(this, &event);
     });
+
 
     //计时器设置
     // 根据格子数设置时间
@@ -151,7 +150,6 @@ MainWindow::MainWindow(QWidget *parent, int row, int col, int numTypes
 
     gameTimer = new QTimer(this);
     connect(gameTimer, &QTimer::timeout, this, &MainWindow::updateTimer);
-    //gameTimer->start(1000); // 每秒触发一次
 
     QVBoxLayout *layout = new QVBoxLayout(ui->centralwidget);
     // 计时标签显示
@@ -169,24 +167,22 @@ MainWindow::MainWindow(QWidget *parent, int row, int col, int numTypes
 
     comboLabel = new QLabel(this);
     comboLabel->setAttribute(Qt::WA_TransparentForMouseEvents);
-    comboLabel->move(width()/5 - comboLabel->width()/2, height()/4);
+    comboLabel->move(width() / 5 - comboLabel->width() / 2, height() / 4);
     auto shadow = new QGraphicsDropShadowEffect(comboLabel);
     shadow->setBlurRadius(15);
-    shadow->setOffset(2,2);
+    shadow->setOffset(2, 2);
     shadow->setColor(Qt::black);
     comboLabel->setGraphicsEffect(shadow);
 
     comboLabel2 = new QLabel(this);
     comboLabel2->setAttribute(Qt::WA_TransparentForMouseEvents);
-    comboLabel2->move(width()*4/5 - comboLabel2->width()/2, height()*3/4);
+    comboLabel2->move(width() * 4 / 5 - comboLabel2->width() / 2, height() * 3 / 4);
     comboLabel2->setGraphicsEffect(shadow);
 
 
     //RPG角色
     player1 = new playerCharacter(this, 1);
     player1->setPosition(QPointF(0, 0));
-    // playerSpeed = qMax(row, col) *  0.1;//速度调整在mapInit中实现
-    // player1->setSpeed(playerSpeed);
 
     player2 = new playerCharacter(this, 2);
     player2->setPosition(QPointF(col + 1, row + 1));
@@ -229,16 +225,16 @@ void MainWindow::gameTimerStart(){
 
 void MainWindow::gameContinue(){
     gameTimer->start();
-    qDebug() << "Game Continued";
+    //qDebug() << "Game Continued";
 }
 
 void MainWindow::keyPressEvent(QKeyEvent *event){
     //后门，一键通关
-    if(event->key() == Qt::Key_F){
+    if (event->key() == Qt::Key_F) {
         success = true;
         qDebug() << "press F";
     }
-    if(event->key() == Qt::Key_I && success){
+    if (event->key() == Qt::Key_I && success) {
         portal = true;
         success = false;
         qDebug() << "press I";
@@ -249,10 +245,9 @@ void MainWindow::keyPressEvent(QKeyEvent *event){
         pauseDialog dlg(this);
         gameTimer->stop();
         // 连接暂停菜单的“返回准备界面”信号
-        connect(&dlg, &pauseDialog::requestBackToPrep, this, [this,&dlg]() {
+        connect(&dlg, &pauseDialog::requestBackToPrep, this, [this, &dlg]() {
             emit backToPrep();
             dlg.close();
-            //backgroundNum  = std::rand()%6;
         });
 
         //继续游戏
@@ -265,66 +260,64 @@ void MainWindow::keyPressEvent(QKeyEvent *event){
         dlg.exec();  // 模态运行
     }
 
-    if(characterSet && !freeze1){//使用角色时
-        playerCharacter::Direction curDir1 = player1 -> getDir();
+    if (characterSet && !freeze1) {//使用角色时
+        playerCharacter::Direction curDir1 = player1->getDir();
 
         //dizzy道具
-        if(!dizzy1){
+        if (!dizzy1) {
             if (event->key() == Qt::Key_W) {
                 wPressed = true;
-                if( curDir1 == playerCharacter::Up && selTempRow1 != -1){
+                if (curDir1 == playerCharacter::Up && selTempRow1 != -1) {
                     linkStart(selTempRow1, selTempCol1);
                 }
 
             } else if (event->key() == Qt::Key_A) {
                 aPressed = true;
-                if( curDir1 == playerCharacter::Left && selTempRow1 != -1){
+                if (curDir1 == playerCharacter::Left && selTempRow1 != -1) {
                     linkStart(selTempRow1, selTempCol1);
                 }
 
             } else if (event->key() == Qt::Key_S) {
                 sPressed = true;
-                if( curDir1 == playerCharacter::Down && selTempRow1 != -1){
+                if (curDir1 == playerCharacter::Down && selTempRow1 != -1) {
                     linkStart(selTempRow1, selTempCol1);
                 }
 
             } else if (event->key() == Qt::Key_D) {
                 dPressed = true;
-                if( curDir1 == playerCharacter::Right && selTempRow1 != -1){
+                if (curDir1 == playerCharacter::Right && selTempRow1 != -1) {
                     linkStart(selTempRow1, selTempCol1);
                 }
-
             }
         }else{
             if (event->key() == Qt::Key_W) {
                 sPressed = true;
-                if( curDir1 == playerCharacter::Down && selTempRow1 != -1){
+                if (curDir1 == playerCharacter::Down && selTempRow1 != -1) {
                     linkStart(selTempRow1, selTempCol1);
                 }
 
             } else if (event->key() == Qt::Key_A) {
                 dPressed = true;
-                if( curDir1 == playerCharacter::Right && selTempRow1 != -1){
+                if (curDir1 == playerCharacter::Right && selTempRow1 != -1) {
                     linkStart(selTempRow1, selTempCol1);
                 }
 
             } else if (event->key() == Qt::Key_S) {
                 wPressed = true;
-                if( curDir1 == playerCharacter::Up && selTempRow1 != -1){
+                if (curDir1 == playerCharacter::Up && selTempRow1 != -1) {
                     linkStart(selTempRow1, selTempCol1);
                 }
 
             } else if (event->key() == Qt::Key_D) {
                 aPressed = true;
-                if( curDir1 == playerCharacter::Left && selTempRow1 != -1){
+                if (curDir1 == playerCharacter::Left && selTempRow1 != -1) {
                     linkStart(selTempRow1, selTempCol1);
                 }
-
             }
         }
 
-        if(event->key() == Qt::Key_Q){//取消选择
-            if(firstClicked){
+        if (event->key() == Qt::Key_Q) {//取消选择
+            if (firstClicked) {
                 firstClicked = false;
                 selRow1 = selCol1 = -1;
 
@@ -335,60 +328,60 @@ void MainWindow::keyPressEvent(QKeyEvent *event){
 
     //双角色
     if(doubleCharacter && !freeze2){
-        playerCharacter::Direction curDir2 = player2 -> getDir();
+        playerCharacter::Direction curDir2 = player2->getDir();
         if(!dizzy2){
             if (event->key() == Qt::Key_Up) {
                 upPressed = true;
-                if( curDir2 == playerCharacter::Up && selTempRow2 != -1){
+                if (curDir2 == playerCharacter::Up && selTempRow2 != -1) {
                     linkStart2(selTempRow2, selTempCol2);
                 }
 
             } else if (event->key() == Qt::Key_Left) {
                 leftPressed = true;
-                if( curDir2 == playerCharacter::Left && selTempRow2 != -1){
+                if (curDir2 == playerCharacter::Left && selTempRow2 != -1) {
                     linkStart2(selTempRow2, selTempCol2);
                 }
 
             } else if (event->key() == Qt::Key_Right) {
                 rightPressed = true;
-                if( curDir2 == playerCharacter::Right && selTempRow2 != -1){
+                if (curDir2 == playerCharacter::Right && selTempRow2 != -1) {
                     linkStart2(selTempRow2, selTempCol2);
                 }
 
             } else if (event->key() == Qt::Key_Down) {
                 downPressed = true;
-                if( curDir2 == playerCharacter::Down && selTempRow2 != -1){
+                if (curDir2 == playerCharacter::Down && selTempRow2 != -1) {
                     linkStart2(selTempRow2, selTempCol2);
                 }
             }
         }else{
             if (event->key() == Qt::Key_Up) {
                 downPressed = true;
-                if( curDir2 == playerCharacter::Down && selTempRow2 != -1){
+                if (curDir2 == playerCharacter::Down && selTempRow2 != -1) {
                     linkStart2(selTempRow2, selTempCol2);
                 }
 
             } else if (event->key() == Qt::Key_Left) {
                 rightPressed = true;
-                if( curDir2 == playerCharacter::Right && selTempRow2 != -1){
+                if (curDir2 == playerCharacter::Right && selTempRow2 != -1) {
                     linkStart2(selTempRow2, selTempCol2);
                 }
 
             } else if (event->key() == Qt::Key_Right) {
                 leftPressed = true;
-                if( curDir2 == playerCharacter::Left && selTempRow2 != -1){
+                if (curDir2 == playerCharacter::Left && selTempRow2 != -1) {
                     linkStart2(selTempRow2, selTempCol2);
                 }
 
             } else if (event->key() == Qt::Key_Down) {
                 upPressed = true;
-                if( curDir2 == playerCharacter::Up && selTempRow2 != -1){
+                if (curDir2 == playerCharacter::Up && selTempRow2 != -1) {
                     linkStart2(selTempRow2, selTempCol2);
                 }
             }
         }
 
-        if(event->key() == Qt::Key_M){//取消选择
+        if (event->key() == Qt::Key_M) {//取消选择
             if(firstClicked2){
                 firstClicked2 = false;
                 selRow12 = selCol12 = -1;
@@ -399,10 +392,9 @@ void MainWindow::keyPressEvent(QKeyEvent *event){
     }
 }
 
-void MainWindow::keyReleaseEvent(QKeyEvent *event)
-{
-    if(characterSet){
-        if(!dizzy1){
+void MainWindow::keyReleaseEvent(QKeyEvent *event) {
+    if (characterSet) {
+        if (!dizzy1) {
             if (event->key() == Qt::Key_W) {
                 wPressed = false;
             } else if (event->key() == Qt::Key_A) {
@@ -412,7 +404,7 @@ void MainWindow::keyReleaseEvent(QKeyEvent *event)
             } else if (event->key() == Qt::Key_D) {
                 dPressed = false;
             }
-        }else{
+        } else {
             if (event->key() == Qt::Key_W) {
                 sPressed = false;
             } else if (event->key() == Qt::Key_A) {
@@ -424,8 +416,8 @@ void MainWindow::keyReleaseEvent(QKeyEvent *event)
             }
         }
     }
-    if(doubleCharacter){
-        if(!dizzy2){
+    if (doubleCharacter) {
+        if (!dizzy2) {
             if (event->key() == Qt::Key_Up) {
                 upPressed = false;
             } else if (event->key() == Qt::Key_Left) {
@@ -435,7 +427,7 @@ void MainWindow::keyReleaseEvent(QKeyEvent *event)
             } else if (event->key() == Qt::Key_Right) {
                 rightPressed = false;
             }
-        }else{
+        } else {
             if (event->key() == Qt::Key_Up) {
                 downPressed = false;
             } else if (event->key() == Qt::Key_Left) {
@@ -452,23 +444,23 @@ void MainWindow::keyReleaseEvent(QKeyEvent *event)
 }
 
 void MainWindow::mousePressEvent(QMouseEvent *event) {
-    if(!characterSet){
+    if (!characterSet) {
         // 鼠标像素坐标
         QPointF pixel = event->position();
         QPointF logic = pixelToLogical(pixel);
-        if(event->button() == Qt::LeftButton){
+        if (event->button() == Qt::LeftButton) {
             if (!std::isnan(logic.x())) {//是否有效坐标
                 int col = (int)std::floor(logic.x());
                 int row = (int)std::floor(logic.y());
-                qDebug() << "logic:" << logic << " -> row,col =" << row << col;
+                //qDebug() << "logic:" << logic << " -> row,col =" << row << col;
 
                 linkStart(row, col);
             } else {
                 qDebug() << "点击在绘制区域外";
             }
         }
-        if(event->button() == Qt::RightButton){//右键取消
-            if(firstClicked){
+        if (event->button() == Qt::RightButton) {//右键取消
+            if (firstClicked) {
                 firstClicked = false;
                 selRow1 = selCol1 = -1;
 
@@ -477,22 +469,21 @@ void MainWindow::mousePressEvent(QMouseEvent *event) {
         }
     }
 
-    if(characterSet && flash && !doubleCharacter){
+    if (characterSet && flash && !doubleCharacter) {
         // 鼠标像素坐标
         QPointF pixel = event->position();
         QPointF logic = pixelToLogical(pixel);
-        if(event->button() == Qt::LeftButton){
+        if (event->button() == Qt::LeftButton) {
             if (!std::isnan(logic.x())) {//是否有效坐标
                 flashMove(logic);
             } else {
                 qDebug() << "点击在绘制区域外";
             }
         }
-
     }
 
-    if(event->button() == Qt::RightButton){//右键取消
-        if(firstClicked){
+    if (event->button() == Qt::RightButton) {//右键取消
+        if (firstClicked) {
             firstClicked = false;
             selRow1 = selCol1 = -1;
 
@@ -500,7 +491,6 @@ void MainWindow::mousePressEvent(QMouseEvent *event) {
         }
     }
     QMainWindow::mousePressEvent(event);
-
 }
 
 void MainWindow::resizeEvent(QResizeEvent *event) {
@@ -509,7 +499,8 @@ void MainWindow::resizeEvent(QResizeEvent *event) {
         scoreboard->move(width() - scoreboard->width() - 20, 10);
     }
 
-    QString pathPix = QString(":/images/Images/Background/pixbg") + QString::number(1 + backgroundNum)+ QString(".png");
+    QString pathPix = QString(":/images/Images/Background/pixbg")
+                      + QString::number(1 + backgroundNum) + QString(".png");
     QPixmap bg = loadWithOpacity(pathPix, 0.7, this->size());;
     bg = bg.scaled(this->size(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
 
@@ -517,7 +508,6 @@ void MainWindow::resizeEvent(QResizeEvent *event) {
     pal.setBrush(QPalette::Window, bg);
     this->setAutoFillBackground(true);
     this->setPalette(pal);
-
 }
 
 QPixmap MainWindow::loadWithOpacity(const QString &path, qreal opacity, const QSize &size) {
@@ -550,7 +540,6 @@ void MainWindow::mapInit(){
     scoreboard->setScore(0);
     scoreboard->setScore2(0);
 
-    //board.clear();
     if (numTypes < 2) numTypes = 2; // 至少 3 种
     if (numTypes > 20) numTypes = 20; // 至多 20 种
 
@@ -559,7 +548,8 @@ void MainWindow::mapInit(){
         numTypes = maxNum;
     }
 
-    backgroundNum  = std::rand()%6;
+    //初始化地图与选中逻辑
+    backgroundNum  = std::rand() % 6;
 
     firstClicked = false;
     selRow1 = selCol1 = -1;
@@ -569,21 +559,24 @@ void MainWindow::mapInit(){
 
     //角色还原
     QPointF p(0, 0);
-    player1 -> setPosition(p);
+    player1->setPosition(p);
 
     //双角色
-    if(doubleCharacter){
+    if (doubleCharacter) {
         QPointF q(col + 1, row + 1);
-        player2 -> setPosition(q);
+        player2->setPosition(q);
     }
-    playerSpeed = qMin(qMax(row, col), 8) *  0.02;
+    playerSpeed = qMin(qMax(row, col), 8) * 0.02;
     player1->setSpeed(playerSpeed);//速度设置
     player2->setSpeed(playerSpeed);//速度设置
 
+    //道具状态还原
+    freeze1 = freeze2 = dizzy1 = dizzy2 = false;
+    startHint = flash =false;
 
     int total = row * col;
     int toolNum = total / 10;//道具数量
-    qDebug()<<toolNum;
+    //qDebug()<<toolNum;
     bool needEmpty = ((total - toolNum) % 2 == 1);
     int usable = (total - toolNum) - (needEmpty ? 1 : 0);
     int pairs = usable / 2;
@@ -611,13 +604,13 @@ void MainWindow::mapInit(){
     }
 
     QVector<int> allTools(6, 0);
-    if(doubleCharacter && toolNum > 2){
+    if (doubleCharacter && toolNum > 2) {
         allTools[4] += 1;
         allTools[5] += 1;
         toolNum -= 2;
     }
 
-    switch (toolNum){
+    switch (toolNum) {
         case 0: break;
         case 1: allTools[0] += 1;
             break;
@@ -639,7 +632,12 @@ void MainWindow::mapInit(){
                 toolNum -= 1;
             }
             while (toolNum > 0) {
-                int t = (std::rand()) % 6;
+                int t ;
+                if (doubleCharacter) {
+                    t = (std::rand()) % 6;
+                }else{//单人模式道具刷新
+                    t = (std::rand()) % 4;
+                }
                 allTools[t]++;
                 toolNum--;
             }
@@ -647,7 +645,7 @@ void MainWindow::mapInit(){
     //清除双人时候的flash道具（-4）
     if(doubleCharacter){
         for(int i = 0;allTools[3] > 0; i++){
-            int add = i%6;
+            int add = i % 6;
             allTools[add] += 1;
             allTools[3]--;
         }
@@ -658,7 +656,6 @@ void MainWindow::mapInit(){
             tiles.append(- t - 1);
         }
     }
-
 
     if(needEmpty) tiles.append(0);//补上第奇数个，为空
 
@@ -681,8 +678,7 @@ void MainWindow::mapInit(){
     update();
 }
 
-void MainWindow::paintEvent(QPaintEvent *event)
-{
+void MainWindow::paintEvent(QPaintEvent *event) {
     Q_UNUSED(event);
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing, true);//抗锯齿
@@ -744,7 +740,7 @@ void MainWindow::paintEvent(QPaintEvent *event)
             if(val < 0){//道具格子绘制
                 QPixmap toolPath;
                 //确定图案路径
-                switch(val){
+                switch (val) {
                 case -1: toolPath.load(":/images/Images/Noita/delay30sec.png");
                     break;
                 case -2: toolPath.load(":/images/Images/Noita/shuffleTool.png");
@@ -796,12 +792,12 @@ void MainWindow::paintEvent(QPaintEvent *event)
                 painter.fillRect(rect, overlay);
             }
 
-            //角色1
-            if (canFirstClicked && r == canLinkRow1 && c == canLinkCol1) {
+            //hint时可画
+            if (startHint && canFirstClicked && r == canLinkRow1 && c == canLinkCol1) {
                 QColor overlay(100, 100, 100, 140); // RGBA，alpha=120 半透明
                 painter.fillRect(rect, overlay);
             }
-            if (canSecondClicked && r == canLinkRow2 && c == canLinkCol2) {
+            if (startHint && canSecondClicked && r == canLinkRow2 && c == canLinkCol2) {
                 QColor overlay(100, 100, 100, 140); // RGBA，alpha=120 半透明
                 painter.fillRect(rect, overlay);
             }
@@ -809,14 +805,14 @@ void MainWindow::paintEvent(QPaintEvent *event)
     }
 
     painter.restore();
-    if(characterSet){
+    if (characterSet) {
         // 绘制 player（将逻辑坐标变换到像素）
         player1->draw(&painter, t, freeze1);
         if(doubleCharacter) player2->draw(&painter, t, freeze2);
     }
 
-
-    if(!path.isEmpty()){
+    //绘制连接路径
+    if (!path.isEmpty()) {
         //qDebug() << "drawPath";
 
         //QPoint只能整数坐标，于是更新QPointF方便绘画
@@ -849,7 +845,7 @@ void MainWindow::paintEvent(QPaintEvent *event)
         checkGameFinished();
     }
 
-    if(!path2.isEmpty()){
+    if (!path2.isEmpty()) {
         //qDebug() << "drawPath2";
 
         //QPoint只能整数坐标，于是更新QPointF方便绘画
@@ -878,15 +874,12 @@ void MainWindow::paintEvent(QPaintEvent *event)
         painter.setPen(pen);
 
         painter.drawPath(pathLine);
-
-        checkGameFinished();
     }
 
     painter.restore();//恢复到坐标变换前
 }
 
-
-QTransform MainWindow::computeLogicalToDeviceTransform() const{
+QTransform MainWindow::computeLogicalToDeviceTransform() const {
     QRect viewport;
     QRectF windowRect;
 
@@ -908,10 +901,10 @@ QTransform MainWindow::computeLogicalToDeviceTransform() const{
 
     windowRect = QRectF(-widSpace, -1.4 * heiSpace, (col + 2) + 2 * widSpace, (row + 2) + 2.4 * heiSpace);
 
-    double a = double(viewport.width())  / windowRect.width();   // scaleX
+    double a = double(viewport.width()) / windowRect.width();   // scaleX
     double c = double(viewport.height()) / windowRect.height();  // scaleY
-    double b = double(viewport.left())  - windowRect.left() * a; // translateX
-    double d = double(viewport.top())   - windowRect.top()  * c; // translateY
+    double b = double(viewport.left()) - windowRect.left() * a; // translateX
+    double d = double(viewport.top()) - windowRect.top() * c; // translateY
 
     // QTransform(m11, m12, m13, m21, m22, m23, m31, m32, m33)
     return QTransform(a, 0, 0,
@@ -919,7 +912,7 @@ QTransform MainWindow::computeLogicalToDeviceTransform() const{
                       b, d, 1);
 }
 
-QPointF MainWindow::pixelToLogical(const QPointF &pixel) const{
+QPointF MainWindow::pixelToLogical(const QPointF &pixel) const {
     QRect viewport;
     QRectF windowRect;
 
@@ -940,15 +933,16 @@ QPointF MainWindow::pixelToLogical(const QPointF &pixel) const{
     double widSpace = (col + 2) * marginRatio;
     double heiSpace = (row + 2) * marginRatio;
 
-    windowRect = QRectF(-widSpace, -1.4 * heiSpace, (col + 2) + 2 * widSpace, (row + 2) + 2.4 * heiSpace);
-
+    windowRect = QRectF(-widSpace, -1.4 * heiSpace,
+                        (col + 2) + 2 * widSpace, (row + 2) + 2.4 * heiSpace);
 
     //如果点击不在 viewport 内，可选择忽略或裁剪
-    if (!viewport.contains(pixel.toPoint())) {
-        return QPointF(std::numeric_limits<double>::quiet_NaN(),
-                       std::numeric_limits<double>::quiet_NaN());
-    }//NaN = Not a Number（非数字），是 IEEE 754 浮点标准定义的一种特殊值
-     //quiet_NaN() 返回一个 安静的 NaN 值（不会触发异常/中断）
+    // if (!viewport.contains(pixel.toPoint())) {
+    //     return QPointF(std::numeric_limits<double>::quiet_NaN(),
+    //                    std::numeric_limits<double>::quiet_NaN());
+    // }
+    //NaN = Not a Number（非数字），是 IEEE 754 浮点标准定义的一种特殊值
+    //quiet_NaN() 返回一个 安静的 NaN 值（不会触发异常/中断）
 
 
     QTransform t = computeLogicalToDeviceTransform();
@@ -964,7 +958,7 @@ QPointF MainWindow::pixelToLogical(const QPointF &pixel) const{
     return inv.map(pixel);
 }
 
-void MainWindow::setRecieved(){
+void MainWindow::setRecieved() {
     QSettings settings("config.txt", QSettings::IniFormat);//随程序发布统一配置
 
     col = settings.value("block/col", 6).toInt();
@@ -975,9 +969,9 @@ void MainWindow::setRecieved(){
     doubleCharacter = settings.value("checkBox/doubleCharacter", false).toBool();
     //qDebug() << doubleCharacter;
 
-    if(!characterSet){
+    if (!characterSet) {
         timerMagnification = 1.3;
-    }else{
+    } else {
         timerMagnification = 1.6;
     }
 
@@ -997,14 +991,14 @@ void MainWindow::setRecieved(){
     mapInit();
 }
 
-void MainWindow::setProtection(){
-    if(maxTurns < 1 ) maxTurns = 1;
-    if(row > 20) row = 20;
-    if(col > 20) col = 20;
-    if(row < 2) row = 2;
-    if(col < 2) col = 2;
-    if(numTypes > 20) numTypes = 20;
-    if(numTypes < 2) numTypes = 2;
+void MainWindow::setProtection() {
+    if (maxTurns < 1 ) maxTurns = 1;
+    if (row > 20) row = 20;
+    if (col > 20) col = 20;
+    if (row < 2) row = 2;
+    if (col < 2) col = 2;
+    if (numTypes > 20) numTypes = 20;
+    if (numTypes < 2) numTypes = 2;
 }
 
 
@@ -1025,8 +1019,26 @@ void MainWindow::updateTimer() {
 
 }
 
-void MainWindow::onGameOver(){
-    if(!success){
+void MainWindow::onGameOver() {
+    bool allZero = std::all_of(board.begin(), board.end(), [](const QVector<int>& row){
+        return std::all_of(row.begin(), row.end(), [](int val){ return val == 0; });
+    });
+
+    if (!allZero && noSolution) {
+        QMessageBox::StandardButton gameOver;
+        gameOver = QMessageBox::information(this,
+                                            "Default",
+                                            "很可惜无解喵~🥲",
+                                            QMessageBox::Ok);  // 只有一个按钮 OK
+
+        if (gameOver == QMessageBox::Ok) {
+            emit backToPrep();
+            setRecieved();//重新初始化地图
+            return;
+        }
+    }
+
+    if (!allZero) {
         QMessageBox::StandardButton gameOver;
         gameOver = QMessageBox::information(this,
                                          "Loser",
@@ -1061,17 +1073,16 @@ void MainWindow::updateTimerDisplay() {
 }
 
 
-void MainWindow::linkStart(int r,int c){
+void MainWindow::linkStart(int r,int c) {
+    if (r < 1 || r > row || c < 1 || c > col) return;
+    if (board[r][c] == 0) return;
 
-    if(r < 1 || r > row || c < 1 || c > col ) return;
-    if(board[r][c] == 0) return;
-
-    if(!firstClicked){//如果不存在已经选中的图标
+    if (!firstClicked) {//如果不存在已经选中
         selRow1 = r;
         selCol1 = c;
         firstClicked = true;
 
-        if(board[r][c] < 0){
+        if (board[r][c] < 0) {
             int toolNum = board[r][c];
 
             selRow1 = selCol1 = -1;
@@ -1082,9 +1093,9 @@ void MainWindow::linkStart(int r,int c){
         }
 
         update();
-    }else{
-        if(secondClicked) return;
-        if(r == selRow1 && c == selCol1){//排除重复点击同一个的bug
+    } else {
+        if (secondClicked) return;
+        if (r == selRow1 && c == selCol1) {//排除重复点击同一个的bug
             firstClicked = false;
             selRow1 = selCol1 = -1;
             update();
@@ -1099,20 +1110,19 @@ void MainWindow::linkStart(int r,int c){
         QPoint a(selCol1,selRow1);
         QPoint b(selCol2,selRow2);
 
-        path = findLinkPath(a ,b ,board ,maxTurns);
+        path = findLinkPath(a, b, board, maxTurns);
 
         qDebug() << path;
-        if(!path.isEmpty()){
+        if (!path.isEmpty()) {
             match = true;//配对成功
-
             update();
+            //qDebug() << match;
 
             QTimer::singleShot(300, this, [this]() {
                 qDebug() << "0.3 second later";
-                // 这里可以执行延时后的操作，比如 update() 绘制
 
                 scoreboard->addScore(board[selRow1][selCol1]);
-                combo ++;
+                combo++;
                 qDebug() << combo;
                 comboAwardScores();
 
@@ -1121,11 +1131,7 @@ void MainWindow::linkStart(int r,int c){
                 firstClicked = false;
                 secondClicked = false;
                 match = false;
-                //假如同时选中一个格子，先消除的才得分成功
-                // selRow12 = selCol12 = selRow22 = selCol22 = -1;
-                // firstClicked2 = false;
-                // secondClicked2 = false;
-                // match2 = false;
+
                 //帮助hint归零
                 canLinkRow1 = canLinkCol1 = canLinkRow2 = canLinkCol2 = -1;
                 canFirstClicked = false;
@@ -1135,14 +1141,13 @@ void MainWindow::linkStart(int r,int c){
                 path.clear();
                 update();
             });
-        }else{
+        } else {
             comboLabel->hide();
             tipLabel->show();
             scoreboard->addScore(-10);
 
-            QTimer::singleShot(1000, this, [this]() {
-                qDebug() << "1 second later";
-                // 这里可以执行延时后的操作，比如 update() 绘制
+            QTimer::singleShot(800, this, [this]() {
+                qDebug() << "0.8 second later";
 
                 combo = 0;
 
@@ -1155,20 +1160,19 @@ void MainWindow::linkStart(int r,int c){
                 update();
             });
         }
-
     }
 }
 
-void MainWindow::linkStart2(int r,int c){
-    if(r < 1 || r > row || c < 1 || c > col ) return;
-    if(board[r][c] == 0) return;
+void MainWindow::linkStart2(int r,int c) {
+    if (r < 1 || r > row || c < 1 || c > col) return;
+    if (board[r][c] == 0) return;
 
-    if(!firstClicked2){//如果不存在已经选中的图标
+    if (!firstClicked2) {//如果不存在已经选中的图标
         selRow12 = r;
         selCol12 = c;
         firstClicked2 = true;
 
-        if(board[r][c] < 0){
+        if (board[r][c] < 0) {
             int toolNum = board[r][c];
 
             selRow12 = selCol12 = -1;
@@ -1179,9 +1183,9 @@ void MainWindow::linkStart2(int r,int c){
         }
 
         update();
-    }else{
-        if(secondClicked2) return;
-        if(r == selRow12 && c == selCol12){//排除重复点击同一个的bug
+    } else {
+        if (secondClicked2) return;
+        if (r == selRow12 && c == selCol12) {//排除重复点击同一个
             firstClicked2 = false;
             selRow12 = selCol12 = -1;
             update();
@@ -1196,19 +1200,18 @@ void MainWindow::linkStart2(int r,int c){
         QPoint a(selCol12,selRow12);
         QPoint b(selCol22,selRow22);
 
-        path2 = findLinkPath(a ,b ,board ,maxTurns);
+        path2 = findLinkPath(a, b, board, maxTurns);
 
         qDebug() << path2;
-        if(!path2.isEmpty()){
+        if (!path2.isEmpty()) {
             match2 = true;//配对成功
             update();
 
             QTimer::singleShot(300, this, [this]() {
                 qDebug() << "0.3 second later";
-                // 这里可以执行延时后的操作，比如 update() 绘制
 
                 scoreboard->addScore2(board[selRow12][selCol12]);
-                combo2 ++;
+                combo2++;
                 qDebug() << combo2;
                 comboAwardScores2();
 
@@ -1217,11 +1220,7 @@ void MainWindow::linkStart2(int r,int c){
                 firstClicked2 = false;
                 secondClicked2 = false;
                 match2 = false;
-                //假如同时选中一个格子，先消除的才得分成功
-                // selRow1 = selCol1 = selRow2 = selCol2 = -1;
-                // firstClicked = false;
-                // secondClicked = false;
-                // match = false;
+
                 //帮助hint归零
                 canLinkRow1 = canLinkCol1 = canLinkRow2 = canLinkCol2 = -1;
                 canFirstClicked = false;
@@ -1231,14 +1230,13 @@ void MainWindow::linkStart2(int r,int c){
                 path2.clear();
                 update();
             });
-        }else{
+        } else {
             comboLabel->hide();
             tipLabel->show();
             scoreboard->addScore2(-10);
 
-            QTimer::singleShot(1000, this, [this]() {
-                qDebug() << "1 second later";
-                // 这里可以执行延时后的操作，比如 update() 绘制
+            QTimer::singleShot(800, this, [this]() {
+                qDebug() << "0.8 second later";
 
                 combo2 = 0;
 
@@ -1251,15 +1249,13 @@ void MainWindow::linkStart2(int r,int c){
                 update();
             });
         }
-
     }
 }
 
-void MainWindow::comboAwardScores(){
-
+void MainWindow::comboAwardScores() {
     int awardscore = 0;
-    // 选择颜色
-    QString color;
+
+    QString color;// 选择颜色
     if (combo < 5) {
         return;
     } else if (combo < 15) {
@@ -1267,13 +1263,13 @@ void MainWindow::comboAwardScores(){
         awardscore = 2;
     } else if(combo < 25){
         color = "orange";
-        awardscore = 5;
-    }else{
+        awardscore = 4;
+    } else {
         color = "red";
-        awardscore = 8;
+        awardscore = 7;
     }
     scoreboard->addScore(awardscore);
-    qDebug() << "combo success";
+    //qDebug() << "combo success";
 
     // 设置样式
     comboLabel->setStyleSheet(
@@ -1304,11 +1300,10 @@ void MainWindow::comboAwardScores(){
     group->start(QAbstractAnimation::DeleteWhenStopped);
 }
 
-void MainWindow::comboAwardScores2(){
-
+void MainWindow::comboAwardScores2() {
     int awardscore = 0;
-    // 选择颜色
-    QString color;
+
+    QString color;// 选择颜色
     if (combo2 < 5) {
         return;
     } else if (combo2 < 15) {
@@ -1316,13 +1311,13 @@ void MainWindow::comboAwardScores2(){
         awardscore = 2;
     } else if(combo2 < 25){
         color = "orange";
-        awardscore = 5;
-    }else{
+        awardscore = 4;
+    } else {
         color = "red";
-        awardscore = 8;
+        awardscore = 7;
     }
     scoreboard->addScore2(awardscore);
-    qDebug() << "combo success";
+    //qDebug() << "combo success";
 
     // 设置样式
     comboLabel2->setStyleSheet(
@@ -1353,14 +1348,14 @@ void MainWindow::comboAwardScores2(){
     group->start(QAbstractAnimation::DeleteWhenStopped);
 }
 
-void MainWindow::checkGameFinished(){
-    if(success){
+void MainWindow::checkGameFinished() {
+    if (success) {
         success = false;
         return;
-    };
+    };//不想让人碰巧按下F又碰巧按下I直接赢，只有一起按才可以（嘻嘻
 
-    bool allZero = std::all_of(board.begin(), board.end(), [](const QVector<int>& row){
-        return std::all_of(row.begin(), row.end(), [](int val){ return val == 0; });
+    bool allZero = std::all_of(board.begin(), board.end(), [](const QVector<int>& row) {
+        return std::all_of(row.begin(), row.end(), [](int val) { return val == 0; });
     });
     //qDebug() << allZero;
     if ((allZero && !firstClicked) || portal) {
@@ -1368,34 +1363,32 @@ void MainWindow::checkGameFinished(){
         int tempBestScore = scoreboard->getScore();
 
         gameTimer->stop();
-        // 创建一个QMessageBox对象
+
         QMessageBox msgBox;
         msgBox.setWindowTitle("胜利");
         msgBox.setText("Elaina向通关的你比了个心🥰");
         msgBox.setStandardButtons(QMessageBox::Ok);
 
-
-        if(doubleCharacter){
+        if (doubleCharacter) {
             int s1 = scoreboard->getScore();
             int s2 = scoreboard->getScore2();
-            if(s1 == s2){
+            if (s1 == s2) {
                 msgBox.setWindowTitle("平局");
                 msgBox.setText("Elina拉着大家一起开心地开始野餐~");
-            }else if(s1 > s2){
+            } else if (s1 > s2) {
                 msgBox.setWindowTitle("Player1 Win!");
                 msgBox.setText("Elaina送了Player1一朵胜利的花花🌸");
-            }else{
+            } else {
                 tempBestScore = scoreboard->getScore2();
                 msgBox.setWindowTitle("Player2 Win!");
                 msgBox.setText("Elaina送了Player2一朵胜利的花花🌸");
             }
         }
 
-        if(tempBestScore > scoreboard->getBestScore()){
+        if (tempBestScore > scoreboard->getBestScore()) {
             scoreboard->setBestScore(tempBestScore);
             QSettings settings("local.txt", QSettings::IniFormat);
             settings.setValue("Info/BestScore", scoreboard->getBestScore());
-
         }
 
         QMessageBox::StandardButton reply = static_cast<QMessageBox::StandardButton>(msgBox.exec());
@@ -1414,22 +1407,18 @@ void MainWindow::checkGameFinished(){
 
 constexpr int DIR_START = 5;
 //寻路函数，采用0-1 BFS搜索
+// 在连连看棋盘中寻找从 a 到 b 的合法路径
+//  * 规则：
+// 路径只能经过空格 (map[x][y] == 0) 或终点 b
+// 路径不能穿过未消除的格子
+// 拐点个数 <= maxTurns
+// 初始方向不计入拐点（第一段直走算作 0 拐点）
+// start 起点（逻辑坐标：行x,列y）
+// end 终点（逻辑坐标）
+// map 游戏棋盘：0 表示空格，非0 表示方块
+// maxTurns 最大允许拐点数
+//  * return QVector<QPoint> 路径（包含起点、拐点、终点），若无合法路径返回空
 
-/**
- * @brief 在连连看棋盘中寻找从 a 到 b 的一条合法路径
- *
- * 规则：
- *  - 路径只能经过空格 (map[x][y] == 0) 或终点 b
- *  - 路径不能穿过未消除的格子
- *  - 拐点个数 <= maxTurns
- *  - 初始方向不计入拐点（第一段直走算作 0 拐点）
- *
- * @param start 起点（逻辑坐标：行x,列y）
- * @param end 终点（逻辑坐标）
- * @param map 游戏棋盘：0 表示空格，非0 表示方块
- * @param maxTurns 最大允许拐点数
- * @return QVector<QPoint> 路径（包含起点、拐点、终点），若无合法路径返回空
- */
 QVector<QPoint> MainWindow::findLinkPath(
     const QPoint &start, const QPoint &end,
     const QVector<QVector<int>> &map,//已初始化为0~row+1,0~col+1,预留一圈空位
@@ -1477,7 +1466,7 @@ QVector<QPoint> MainWindow::findLinkPath(
         }
     }
 
-    std::deque<State> dq;
+    std::deque<State> dq;//双端队列
 
     // === 从起点向四个方向发射 ===
     // 初始直走段不计拐点（turns = 0），把沿该方向能到达的所有连续可通行格子入队
@@ -1496,7 +1485,6 @@ QVector<QPoint> MainWindow::findLinkPath(
             nr += drow[d];
         }
     }
-
 
     //  0-1 BFS
     while (!dq.empty()) {
@@ -1525,8 +1513,8 @@ QVector<QPoint> MainWindow::findLinkPath(
         for (int nd = 0; nd < 4; ++nd) {
             int nc = cur.col + dcol[nd];
             int nr = cur.row + drow[nd];
-            if (!inBounds(nc, nr)) continue;
-            if (!(map[nr][nc] == 0 || (nc == endCol && nr == endRow))) continue;
+            if (!inBounds(nc, nr)) continue;//保证在地图范围内
+            if (!(map[nr][nc] == 0 || (nc == endCol && nr == endRow))) continue;//仅可过0与目标
 
             int add = (nd == cur.d) ? 0 : 1; // 同方向：0，换方向：+1 拐点
             int ndist = curTurns + add;
@@ -1536,7 +1524,7 @@ QVector<QPoint> MainWindow::findLinkPath(
                 dist[nr][nc][nd] = ndist;
                 parent[nr][nc][nd] = cur;
                 if (add == 0) dq.push_front({ nc, nr, nd }); // 0-cost 边优先
-                else dq.push_back({ nc, nr, nd });          // 1-cost 边放队尾
+                else dq.push_back({ nc, nr, nd });           // 1-cost 边放队尾
             }
         }
     }
@@ -1544,17 +1532,16 @@ QVector<QPoint> MainWindow::findLinkPath(
     return {};// 没有找到满足条件的路径
 }
 
-
-//角色移动
-void MainWindow::tryMove(){  
-    // 1) 计算方向向量 (逻辑单位)
+//角色1移动
+void MainWindow::tryMove() {
+    //计算方向向量
     double vx = 0.0, vy = 0.0;
     if (wPressed) vy -= 1.0;
     if (sPressed) vy += 1.0;
     if (aPressed) vx -= 1.0;
     if (dPressed) vx += 1.0;
 
-    // 2) 归一化（保证斜向移动与轴向速度一致）
+    //归一化（保证斜向移动与轴向速度一致）
     double len = qSqrt(vx*vx + vy*vy);
     double dx = 0.0, dy = 0.0;
     if (len > 1e-9) {
@@ -1574,7 +1561,7 @@ void MainWindow::tryMove(){
     //调用 player 的移动尝试
     player1->Move(dx, dy, topLeft.x(), bottomRight.x(), topLeft.y(), bottomRight.y(), board);
 
-    //选择最近朝向的一点player1
+    //选择最近朝向的一点
     QPoint p1(-1, -1);
     QPoint q1 = player1->selectTips(board);
     if(p1 != q1){
@@ -1588,15 +1575,15 @@ void MainWindow::tryMove(){
 }
 
 //角色移动
-void MainWindow::tryMove2(){
-    // 1) 计算方向向量 (逻辑单位)
+void MainWindow::tryMove2() {
+    //计算方向向量
     double vx = 0.0, vy = 0.0;
     if (upPressed) vy -= 1.0;
     if (downPressed) vy += 1.0;
     if (leftPressed) vx -= 1.0;
     if (rightPressed) vx += 1.0;
 
-    // 2) 归一化（保证斜向移动与轴向速度一致）
+    //归一化（保证斜向移动与轴向速度一致）
     double len = qSqrt(vx*vx + vy*vy);
     double dx = 0.0, dy = 0.0;
     if (len > 1e-9) {
@@ -1616,7 +1603,7 @@ void MainWindow::tryMove2(){
     //调用 player 的移动尝试
     player2->Move(dx, dy, topLeft.x(), bottomRight.x(), topLeft.y(), bottomRight.y(), board);
 
-    //选择最近朝向的一点player1
+    //选择最近朝向的一点
     QPoint p1(-1, -1);
     QPoint q1 = player2->selectTips(board);
     if(p1 != q1){
@@ -1630,29 +1617,26 @@ void MainWindow::tryMove2(){
 }
 
 
-
 //道具实现
-void MainWindow::useTool(int Num, int playerNum){
-    switch(Num){
-    case -1:secDelayTool();
+void MainWindow::useTool(int Num, int playerNum) {
+    switch (Num) {
+    case -1: secDelayTool();
         break;
-    case -2:shuffleTool();
+    case -2: shuffleTool();
         break;
-    case -3:hintTool();
+    case -3: hintTool();
         break;
-    case -4:flashTool();
+    case -4: flashTool();
         break;
-    case -5:freezeTool(playerNum);
+    case -5: freezeTool(playerNum);
         break;
-    case -6:dizzyTool(playerNum);
+    case -6: dizzyTool(playerNum);
         break;
     }
-
 }
 
-//-1： 延时30s
-void MainWindow::secDelayTool(){
-    remainingTime += 30;
+void MainWindow::secDelayTool() {
+    remainingTime += 30;//剩余时间加30s
     delayLabel->show();
     QTimer::singleShot(1000, this, [=]() {// 延时
         delayLabel -> close();
@@ -1660,17 +1644,16 @@ void MainWindow::secDelayTool(){
 
 }
 
-
-void MainWindow::shuffleTool(){
+void MainWindow::shuffleTool() {
     //修改角色位置，防止重叠在地图内
     //角色还原
     QPointF p(0, 0);
-    player1 -> setPosition(p);
+    player1->setPosition(p);
 
     //双角色
-    if(doubleCharacter){
+    if (doubleCharacter) {
         QPointF q(col + 1, row + 1);
-        player2 -> setPosition(q);
+        player2->setPosition(q);
     }
 
     QVector<int> tiles;
@@ -1691,25 +1674,30 @@ void MainWindow::shuffleTool(){
     }
 
     shuffleLabel->show();
-    QTimer::singleShot(1000, this, [=]() {// 延时
-        shuffleLabel -> close();
 
-        qDebug() << "500ms later";
+    //重排检测hint
+    canLinkRow1 = canLinkCol1 = canLinkRow2 = canLinkCol2 = -1;
+    canFirstClicked = false;
+    canSecondClicked = false;
+    canMatch = false;
+
+    QTimer::singleShot(1000, this, [=]() {
+        shuffleLabel -> close();
     });
 
     update();
 }
 
-void MainWindow::hintTool(){
+void MainWindow::hintTool() {
     hintLabel->show();
-    QTimer::singleShot(1000, this, [=]() {// 延时
+    QTimer::singleShot(1000, this, [=]() {
         hintLabel -> close();
     });
 
     startHint = true;
 
-    QTimer::singleShot(10000, this, [this]{
-        //帮助hint归零
+    QTimer::singleShot(10000, this, [this] {
+        //hint归零
         canLinkRow1 = canLinkCol1 = canLinkRow2 = canLinkCol2 = -1;
         canFirstClicked = false;
         canSecondClicked = false;
@@ -1719,7 +1707,7 @@ void MainWindow::hintTool(){
     });
 }
 
-void MainWindow::flashTool(){
+void MainWindow::flashTool() {
     flashLabel->show();
     QTimer::singleShot(1000, this, [=]() {// 延时
         flashLabel -> close();
@@ -1727,13 +1715,13 @@ void MainWindow::flashTool(){
 
     flash = true;
 
-    QTimer::singleShot(5000, this, [this]{
+    QTimer::singleShot(5000, this, [this] {
         flash = false;
     });
 }
 
-void MainWindow::freezeTool(int playerNum){
-    if(playerNum == 1){
+void MainWindow::freezeTool(int playerNum) {
+    if (playerNum == 1) {
         freezeLabel->setText("Player1 unleashed a freezing spell on Player2!");
         freezeLabel->adjustSize();
         freezeLabel->setAlignment(Qt::AlignCenter);
@@ -1746,10 +1734,10 @@ void MainWindow::freezeTool(int playerNum){
 
         freeze2 = true;
 
-        QTimer::singleShot(3000, this, [this]{
+        QTimer::singleShot(3000, this, [this] {
             freeze2 = false;
         });
-    }else{
+    } else {
         freezeLabel->setText("Player2 unleashed a freezing spell on Player1!");
         freezeLabel->adjustSize();
         freezeLabel->setAlignment(Qt::AlignCenter);
@@ -1762,14 +1750,14 @@ void MainWindow::freezeTool(int playerNum){
 
         freeze1 = true;
 
-        QTimer::singleShot(3000, this, [this]{
+        QTimer::singleShot(3000, this, [this] {
             freeze1 = false;
         });
     }
 }
 
-void MainWindow::dizzyTool(int playerNum){
-    if(playerNum == 1){
+void MainWindow::dizzyTool(int playerNum) {
+    if (playerNum == 1) {
         dizzyLabel->setText("Player1 has cast the Dizzy Spell on Player2!");
         dizzyLabel->adjustSize();
         dizzyLabel->setAlignment(Qt::AlignCenter);
@@ -1782,10 +1770,10 @@ void MainWindow::dizzyTool(int playerNum){
 
         dizzy2 = true;
 
-        QTimer::singleShot(10000, this, [this]{
+        QTimer::singleShot(10000, this, [this] {
             dizzy2 = false;
         });
-    }else{
+    } else {
         dizzyLabel->setText("Player2 has cast the Dizzy Spell on Player1!");
         dizzyLabel->adjustSize();
         dizzyLabel->setAlignment(Qt::AlignCenter);
@@ -1798,21 +1786,18 @@ void MainWindow::dizzyTool(int playerNum){
 
         dizzy1 = true;
 
-        QTimer::singleShot(10000, this, [this]{
+        QTimer::singleShot(10000, this, [this] {
             dizzy1 = false;
         });
     }
-
 }
 
 
 //Hint函数辅助函数
-void MainWindow::canHint(){
-    if(!startHint){
-        return;//未开始直接返回，减少调用
-    }
+void MainWindow::canHint() {
+    bool isTool = false;//存在shuffle就还有机会
 
-    if(canMatch){
+    if (canMatch) {
         return;//已找到但还未选择，返回
     }
 
@@ -1820,37 +1805,45 @@ void MainWindow::canHint(){
         for (int c = 1; c < col + 1; ++c) {//清除上一次残留
             canLinkCol1 = canLinkRow1 = -1;
             canFirstClicked = false;
+            if (board[r][c] < 0 && detect(r, c)) isTool = true;
+
             tempLink(r, c);
-            if(!canFirstClicked) continue;//已确定本方块不可以
+            if (!canFirstClicked) continue;//已确定本方块不可以,跳过
 
             for (int i = r; i < row + 1; ++i) {
                 for (int j = c; j < col + 1; ++j) {
                     tempLink(i, j);
-                    if(canMatch){
+                    if (canMatch) {
                         return;
                     }
                 }
             }
         }
     }
+    if (!canMatch) {//防止最后一个高亮
+        canLinkRow1 = canLinkCol1 = canLinkRow2 = canLinkCol2 = -1;
+        canFirstClicked = false;
+        canSecondClicked = false;
+    }
 
-    if(!canMatch){
+    if (!canMatch && !isTool) {
         canLinkCol1 = canLinkRow1 = -1;
         canFirstClicked = false;
 
+        noSolution = true;
+        onGameOver();
         return;
     }
-
 }
 
-void MainWindow::tempLink(int r, int c){
-    if(r < 1 || r > row || c < 1 || c > col ) return;
-    if(board[r][c] == 0) return;
-    if(!detect(r,c)){
+void MainWindow::tempLink(int r, int c) {
+    if (r < 1 || r > row || c < 1 || c > col ) return;
+    if (board[r][c] == 0) return;
+    if (!detect(r,c)) {
         return;//不可能连接
     }
 
-    if(!canFirstClicked){//如果不存在已经选中的图标
+    if (!canFirstClicked) {//如果不存在已经选中的图标
         canLinkRow1 = r;
         canLinkCol1 = c;
         canFirstClicked = true;
@@ -1859,23 +1852,23 @@ void MainWindow::tempLink(int r, int c){
             return;
         }
 
-    }else{
-        if(secondClicked2) return;//已选中
+    } else {
+        if (secondClicked2) return;//已选中
 
-        if(r == canLinkRow1 && c == canLinkCol1){//排除重复同一个
+        if (r == canLinkRow1 && c == canLinkCol1) {//排除重复同一个
             return;
         }
 
-        if(board[r][c] != board[canLinkRow1][canLinkCol1]){
+        if (board[r][c] != board[canLinkRow1][canLinkCol1]) {
             return;//不是同一个格子
         }
 
         QPoint a(canLinkCol1, canLinkRow1);
         QPoint b(c, r);
 
-        canLinkPath = findLinkPath( a, b, board, maxTurns);
+        canLinkPath = findLinkPath(a, b, board, maxTurns);
 
-        if(!canLinkPath.isEmpty()){
+        if (!canLinkPath.isEmpty()) {
             canMatch = true;//配对成功
 
             canLinkRow2 = r;
@@ -1883,59 +1876,74 @@ void MainWindow::tempLink(int r, int c){
             canSecondClicked = true;
             update();
 
-        }else{
+        } else {
             return;
         }
-
     }
 }
 
 bool MainWindow::detect(int r, int c){
     //由于画图时本就上下拓宽一格，于是不用担心越界
-    if(r < 1 || r > row || c < 1 || c > col ) return false;//基本不可能出现
+    if (r < 1 || r > row || c < 1 || c > col ) return false;//基本不可能出现
 
-    if(board[r-1][c] != 0 && board[r+1][c] != 0 && board[r][c-1] != 0 && board[r][c+1] != 0){
-        return false;
-    }else{
+    if (board[r-1][c] == 0 && detectEmptySurround(r-1, c)) {
+        return true;
+    }
+    if (board[r+1][c] == 0 && detectEmptySurround(r+1, c)) {
+        return true;
+    }
+    if (board[r][c-1] == 0 && detectEmptySurround(r, c-1)) {
+        return true;
+    }
+    if (board[r][c+1] == 0 && detectEmptySurround(r, c+1)) {
         return true;
     }
 
+    return false;
 }
 
+bool MainWindow::detectEmptySurround(int r, int c) {
+    if (r >= row || r <= 1 || c >= col || c <= 1) return true;
 
-void MainWindow::flashMove(QPointF p){
+    if (board[r-1][c] != 0 && board[r+1][c] != 0 && board[r][c-1] != 0 && board[r][c+1] != 0) {
+        return false;
+    } else {
+        return true;
+    }
+}
+
+void MainWindow::flashMove(QPointF p) {
     int c = (int)std::floor(p.x());
     int r = (int)std::floor(p.y());
     qDebug() << "logic:" << p << " -> row,col =" << r << c;
 
-    if(r < 1 || r > row || c < 1 || c > col ){
+    if(r < 1 || r > row || c < 1 || c > col) {
         player1->setPosition(p);
-    }else{
-        if(!detect(r, c)){
+    } else {
+        if (!detect(r, c)) {
             return;
         }
 
-        if(board[r][c] == 0){
+        if (board[r][c] == 0) {
             player1->setPosition(p);
-        }else{
+        } else {
             linkStart(r, c);
 
-            if(board[r-1][c] == 0){
+            if (board[r-1][c] == 0) {
                 player1->setPosition(QPointF(c + 0.5, r - 1 + 0.5));
-            }else if(board[r+1][c] == 0){
+            } else if (board[r+1][c] == 0) {
                 player1->setPosition(QPointF(c + 0.5, r + 1 + 0.5));
-            }else if(board[r][c-1] == 0){
+            } else if (board[r][c-1] == 0) {
                 player1->setPosition(QPointF(c - 1 + 0.5, r + 0.5));
-            }else if(board[r][c+1] == 0){
+            } else if (board[r][c+1] == 0) {
                 player1->setPosition(QPointF(c + 1 + 0.5, r + 0.5));
             }
         }
     }
-
 }
 
 
-void MainWindow::saveLocal(){
+void MainWindow::saveLocal() {
     QSettings settings("local.txt", QSettings::IniFormat);
     settings.sync();
     //地图背景
@@ -2016,8 +2024,7 @@ void MainWindow::saveLocal(){
                          QMessageBox::Ok);
 }
 
-
-void MainWindow::loadLocal(){
+void MainWindow::loadLocal() {
     QSettings settings("local.txt", QSettings::IniFormat);
 
     //地图背景
@@ -2096,21 +2103,27 @@ void MainWindow::loadLocal(){
     startHint = settings.value("Status/startHint", false).toBool();
     flash = settings.value("Status/flash", false).toBool();
 
+    QTimer::singleShot(3000, this, [this] {
+        //原有道具效果统一再持续三秒后取消
+        freeze1 = freeze2 = dizzy1 = dizzy2 = false;
+        startHint = flash = false;
+    });
+
     loadMap();
 }
 
-void MainWindow::loadMap(){
+void MainWindow::loadMap() {
     if (numTypes < 2) numTypes = 2; // 至少 3 种
     if (numTypes > 20) numTypes = 20; // 至多 20 种
 
-    if(doubleCharacter){
+    if (doubleCharacter) {
         scoreboard->changePlayers(2);
-    }else{
+    } else {
         scoreboard->changePlayers(1);
     }
 
     int maxNum = row * col / 2;
-    if(numTypes > maxNum){//保护防止过度设置种类
+    if (numTypes > maxNum) {//保护防止过度设置种类
         numTypes = maxNum;
     }
 
@@ -2126,4 +2139,33 @@ void MainWindow::loadMap(){
     this->resize(s.width()+1, s.height()); // 先+1
     this->resize(s);
     update();
+}
+
+
+
+//测试函数
+void MainWindow::testInitMap() {
+    board = {
+        {0,  0,  0,  0,  0,  0,  0,  0},
+        {0,  1,  1,  2,  3,  4,  2,  0},
+        {0,  3,  3,  1,  3,  2,  4,  0},
+        {0, -1,  2,  4, -2, -1,  2,  0},
+        {0,  2,  1,  2,  3,  2,  4,  0},
+        {0,  3,  2,  2,  3,  1,  3,  0},
+        {0, -3,  3,  1,  4,  4,  4,  0},
+        {0,  0,  0,  0,  0,  0,  0,  0}
+    };
+
+}
+
+std::pair<int, int> MainWindow::testLink(int r1, int c1, int r2, int c2) {
+    linkStart(r1, c1);
+    linkStart(r2, c2);
+
+    QEventLoop loop;
+
+    QTimer::singleShot(1000, &loop, &QEventLoop::quit); // 延迟 500ms 后退出循环
+    loop.exec(); // 阻塞直到 quit 被触发
+
+    return std::make_pair(board[r1][c1], board[r2][c2]);
 }

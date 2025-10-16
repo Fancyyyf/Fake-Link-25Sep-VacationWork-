@@ -5,22 +5,19 @@ pauseDialog::pauseDialog(QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::pauseDialog)
 {
-    setWindowTitle("暂停菜单");
     setModal(true);
     setFixedSize(300, 200);
     ui->setupUi(this);
-    this->setWindowIcon(QIcon(":/images/Images/Icon/pauseIcon.png"));//修改角标
-    this->setWindowTitle(QString("游戏已暂停"));
 
+    this->setWindowIcon(QIcon(":/images/Images/Icon/pauseIcon.png"));//修改角标
+    this->setWindowTitle(QString("Game Paused"));
 }
 
-pauseDialog::~pauseDialog()
-{
+pauseDialog::~pauseDialog() {
     delete ui;
 }
 
-void pauseDialog::on_backRequestButton_clicked()
-{
+void pauseDialog::on_backRequestButton_clicked() {
     QMessageBox::StandardButton reply;
     reply = QMessageBox::question(this,
                                   "是否退出",
@@ -36,14 +33,13 @@ void pauseDialog::on_backRequestButton_clicked()
 }
 
 
-void pauseDialog::on_backToGameButton_clicked()
-{
+void pauseDialog::on_backToGameButton_clicked() {
     emit backToGame();
     this->close();
 }
 
 
-void pauseDialog::paintEvent(QPaintEvent* event){
+void pauseDialog::paintEvent(QPaintEvent* event) {
     QPainter painter(this);
 
     // 或绘制图片背景
@@ -51,24 +47,22 @@ void pauseDialog::paintEvent(QPaintEvent* event){
     painter.drawPixmap(this->rect(), pix);
 }
 
-void pauseDialog::keyPressEvent(QKeyEvent *event){
+void pauseDialog::keyPressEvent(QKeyEvent *event) {
     if (event->key() == Qt::Key_Escape) {
         on_backToGameButton_clicked();
     }
 }
 
-void pauseDialog::closeEvent(QCloseEvent *event){
+void pauseDialog::closeEvent(QCloseEvent *event) {
     on_backToGameButton_clicked();
 }
 
-void pauseDialog::on_saveButton_clicked()
-{
+void pauseDialog::on_saveButton_clicked() {
     emit sendSave();
 }
 
 
-void pauseDialog::on_loadButton_clicked()
-{
+void pauseDialog::on_loadButton_clicked() {
     emit dialogLoad();
 }
 

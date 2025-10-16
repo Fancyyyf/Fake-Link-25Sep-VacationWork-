@@ -38,3 +38,13 @@
 实现存档，发布demo7
 更新修正部分小bug，修改demo7.5
 
+10.14
+CMakeList配置，实现同步simpleTest可运行（未实现）
+
+10.16
+实现simpleTest测试连接
+发布demo8
+
+优化代码结构，修正一些corner case例如hint shuffle先后启用的衔接关系等等
+
+优化代码风格，删除不必要的注释

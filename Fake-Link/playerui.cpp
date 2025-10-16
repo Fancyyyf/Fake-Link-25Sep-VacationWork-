@@ -1,8 +1,6 @@
 #include "playerui.h"
 #include "ui_playerui.h"
 
-
-
 playerUI::playerUI(QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::playerUI)
@@ -13,35 +11,33 @@ playerUI::playerUI(QWidget *parent)
     connect(s, &Settings::setUpdated, this, &playerUI::setChangePlayerUI);
     connect(this, &playerUI::receiveLoadSetsChange, this, &playerUI::on_loadButton_clicked);
 
-    QPixmap pixmap(":/images/Images/ui/Title.png");
+    QPixmap pixmap(":/images/Images/ui/Title.png");//主页图片
     ui->titleLabel->setPixmap(pixmap);
     ui->titleLabel->setScaledContents(true);  // 图片自适应 label 大小
-    ui->titleLabel->setFixedSize(231,97);
+    ui->titleLabel->setFixedSize(231, 97);
 
+    this->setWindowTitle("Wink~");
 }
 
-playerUI::~playerUI()
-{
+playerUI::~playerUI() {
     delete ui;
     delete s;
 }
 
-void playerUI::on_gameStartButton_clicked()
-{
+void playerUI::on_gameStartButton_clicked() {
     emit gameStart();
 }
 
 
-void playerUI::on_quitButton_clicked()
-{
+void playerUI::on_quitButton_clicked() {
     this->close();
 }
 
-gameSettings playerUI::preSets(){
+gameSettings playerUI::preSets() {
     QSettings settings("config.txt", QSettings::IniFormat);//随程序发布统一配置
 
     gset.col = settings.value("block/col", 6).toInt();
-    gset.row  = settings.value("block/row", 6).toInt();
+    gset.row = settings.value("block/row", 6).toInt();
     gset.numTypes = settings.value("block/numTypes", 4).toInt();
     gset.maxTurns = settings.value("block/maxTurns", 2).toInt();
     gset.character = settings.value("checkBox/character", false).toBool();
@@ -52,15 +48,13 @@ gameSettings playerUI::preSets(){
 }
 
 
-void playerUI::on_setButton_clicked()
-{
-    while(s->exec()){
+void playerUI::on_setButton_clicked() {
+    while (s->exec()) {
         s->show();
     }
 }
 
-void playerUI::on_loadButton_clicked()
-{
+void playerUI::on_loadButton_clicked() {
     QSettings settings("local.txt", QSettings::IniFormat);//随程序发布统一配置
     settings.sync();
 
@@ -77,7 +71,7 @@ void playerUI::on_loadButton_clicked()
     emit loadStart();//发出载入信号传给MainWindow
 
     gset.col = settings.value("map/col", 6).toInt();
-    gset.row  = settings.value("map/row", 6).toInt();
+    gset.row = settings.value("map/row", 6).toInt();
     gset.numTypes = settings.value("map/numTypes", 4).toInt();
     gset.maxTurns = settings.value("map/maxTurns", 2).toInt();
     gset.character = settings.value("Model/characterSet", false).toBool();
@@ -92,14 +86,13 @@ void playerUI::on_loadButton_clicked()
 }
 
 
-void playerUI::on_refreshButton_clicked()
-{
+void playerUI::on_refreshButton_clicked() {
     emit setChangePlayerUI();
     QMessageBox::information(this, "提示", "刷新成功！");
 }
 
 
-void playerUI::paintEvent(QPaintEvent* event){
+void playerUI::paintEvent(QPaintEvent *event) {
     QPainter painter(this);
 
     // 或绘制图片背景
@@ -107,7 +100,7 @@ void playerUI::paintEvent(QPaintEvent* event){
     painter.drawPixmap(this->rect(), pix);
 }
 
-void playerUI::keyPressEvent(QKeyEvent* event){
+void playerUI::keyPressEvent(QKeyEvent *event){
     if ((event->modifiers() == Qt::ControlModifier) && event->key() == Qt::Key_R) {
         ui->refreshButton->clicked();
     }

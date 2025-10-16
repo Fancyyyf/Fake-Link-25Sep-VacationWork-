@@ -4,8 +4,7 @@
 playerCharacter::playerCharacter(QObject *parent, int num)
     : QObject(parent),
     pixPos(-1, -1), // 初始位置（可改）
-    dir(Down),
-    number(num)
+    dir(Down), number(num)
 {
     // 资源路径按你的资源文件调整
     imgUp    = QImage(":/images/Images/Player" +  QString::number(num) + "/up.png");
@@ -22,7 +21,7 @@ void playerCharacter::Move(double dx, double dy, double leftLimit, double rightL
         // 更新朝向：根据 dx,dy 的主方向决定贴图
     if(dx == 0 && dy == 0){
         return;
-    }else if (qAbs(dx) > qAbs(dy)) {
+    } else if (qAbs(dx) > qAbs(dy)) {
         dir = (dx > 0) ? Right : Left;
     } else {
         dir = (dy >= 0) ? Down : Up;
@@ -43,7 +42,7 @@ void playerCharacter::Move(double dx, double dy, double leftLimit, double rightL
     int allRow = board.size();
     int allCol = board[0].size();
 
-    if(right < 0 || left > allCol || bottom < 0 || top > allRow){
+    if(right < 0 || left > allCol || bottom < 0 || top > allRow) {
         //不在地图范围内可自由移动
         x = newX;
         y = newY;
@@ -64,30 +63,28 @@ void playerCharacter::Move(double dx, double dy, double leftLimit, double rightL
     bool yMove1 = true;
     bool yMove2 = true;
     // 实现斜向移动
-    if(dx > 0){
-        if(inMap(top, right)) xMove1 = (board[top][right] == 0) ? true : false;
-        if(inMap(bottom, right)) xMove2 = (board[bottom][right] == 0) ? true : false;
-    }else{
-        if(inMap(top, left)) xMove1 = (board[top][left] == 0) ? true : false;
-        if(inMap(bottom, left)) xMove2 = (board[bottom][left] == 0) ? true : false;
+    if (dx > 0) {
+        if (inMap(top, right)) xMove1 = (board[top][right] == 0) ? true : false;
+        if (inMap(bottom, right)) xMove2 = (board[bottom][right] == 0) ? true : false;
+    } else {
+        if (inMap(top, left)) xMove1 = (board[top][left] == 0) ? true : false;
+        if (inMap(bottom, left)) xMove2 = (board[bottom][left] == 0) ? true : false;
     }
 
-    if(dy > 0){
-        if(inMap(bottom, right)) yMove1 = (board[bottom][right] == 0) ? true : false;
-        if(inMap(bottom, left)) yMove2 = (board[bottom][left] == 0) ? true : false;
-    }else{
-        if(inMap(top, right)) yMove1 = (board[top][right] == 0) ? true : false;
-        if(inMap(top, left)) yMove2 = (board[top][left] == 0) ? true : false;
+    if (dy > 0) {
+        if (inMap(bottom, right)) yMove1 = (board[bottom][right] == 0) ? true : false;
+        if (inMap(bottom, left)) yMove2 = (board[bottom][left] == 0) ? true : false;
+    } else {
+        if (inMap(top, right)) yMove1 = (board[top][right] == 0) ? true : false;
+        if (inMap(top, left)) yMove2 = (board[top][left] == 0) ? true : false;
     }
 
-    if(xMove1 && xMove2) x = newX;
-    if(yMove1 && yMove2) y = newY;
+    if (xMove1 && xMove2) x = newX;
+    if (yMove1 && yMove2) y = newY;
     pixPos = QPointF(x, y);
-
 }
 
-void playerCharacter::draw(QPainter *painter, const QTransform &logicToScene, bool freeze)
-{
+void playerCharacter::draw(QPainter *painter, const QTransform &logicToScene, bool freeze) {
     //qDebug() << "draw Player";
     QImage *current = nullptr;
     switch (dir) {
@@ -106,7 +103,7 @@ void playerCharacter::draw(QPainter *painter, const QTransform &logicToScene, bo
     QRectF targetRect(x - 0.2, y - 0.2, 0.8, 0.8); // 浮点矩形
     painter->drawImage(targetRect, *current);
 
-    if(freeze){//冰冻状态绘画
+    if (freeze) {//冰冻状态绘画
         painter->save();
 
         // 参数可调：颜色（R,G,B），以及各处透明度
@@ -134,22 +131,18 @@ void playerCharacter::draw(QPainter *painter, const QTransform &logicToScene, bo
     }
 }
 
-QPoint playerCharacter::selectTips(const QVector<QVector<int>> &board){
+QPoint playerCharacter::selectTips(const QVector<QVector<int>> &board) {
     double midX = x + pixwid/2;
     double midY = y + pixhei/2;
 
-    switch(dir){
-    case Up:
-        midY -= 1;
+    switch (dir) {
+    case Up: midY -= 1;
         break;
-    case Down:
-        midY += 1;
+    case Down: midY += 1;
         break;
-    case Left:
-        midX -= 1;
+    case Left: midX -= 1;
         break;
-    case Right:
-        midX += 1;
+    case Right: midX += 1;
         break;
     }
 
@@ -160,13 +153,13 @@ QPoint playerCharacter::selectTips(const QVector<QVector<int>> &board){
     int allCol = board[0].size();
 
     QPoint fake(-1, -1);//返回无法选择的点；
-    if(tmpX < 0 || tmpX > allCol - 1 || tmpY < 0 || tmpY > allRow - 1){
+    if (tmpX < 0 || tmpX > allCol - 1 || tmpY < 0 || tmpY > allRow - 1) {
         return fake;
     }
 
-    if(board[tmpY][tmpX] == 0){
+    if (board[tmpY][tmpX] == 0) {
         return fake;
-    }else{
+    } else {
         QPoint p(tmpX, tmpY);
         return p;
     }

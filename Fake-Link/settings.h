@@ -17,8 +17,7 @@ namespace Ui {
 class Settings;
 }
 
-class Settings : public QDialog
-{
+class Settings : public QDialog {
     Q_OBJECT
 
 public:
@@ -33,6 +32,8 @@ protected:
     void paintEvent(QPaintEvent *event) override;
 
     void keyPressEvent(QKeyEvent *event) override;
+
+    void closeEvent(QCloseEvent *event) override;
 
 signals:
     void setUpdated();

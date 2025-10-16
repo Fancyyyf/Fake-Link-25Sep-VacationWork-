@@ -4,16 +4,15 @@
 
 #include <QApplication>
 #include <QApplication>
+#include <QElapsedTimer>
+#include <QLabel>
 #include <QMovie>
 #include <QTimer>
 #include <QStackedWidget>
-#include <QElapsedTimer>
-#include <QWidget>
-#include <QLabel>
 #include <QStyleFactory>
+#include <QWidget>
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]){
     QApplication a(argc, argv);
     // 固定使用 Fusion 样式（不受系统主题变化影响）,避免深色主题下字体变白
     QApplication::setStyle(QStyleFactory::create("Fusion"));
@@ -32,12 +31,10 @@ int main(int argc, char *argv[])
 
     QApplication::setPalette(palette);
 
-
     playerUI *prep = new playerUI;
 
     gameSettings gset = prep->preSets();
     MainWindow *game = new MainWindow(nullptr, gset.row, gset.col, gset.numTypes, gset.character, gset.maxTurns, gset.doubleCharacter);
-
 
 //启动动画
     QMovie movie(":/gifs/Temp/GenshinStart.gif");
@@ -51,7 +48,7 @@ int main(int argc, char *argv[])
     movie.start();
     label.show();
 
-    //延迟5秒
+    //延迟3秒
     QElapsedTimer timer;
     timer.start();  // 启动计时器
 
@@ -80,7 +77,7 @@ int main(int argc, char *argv[])
         game->gameTimerStart();
     });
 
-    QObject::connect(game, &MainWindow::backToPrep,[=](){
+    QObject::connect(game, &MainWindow::backToPrep,[=]() {
         game->close();
         prep->show();
     });
