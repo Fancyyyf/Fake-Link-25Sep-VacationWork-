@@ -525,6 +525,12 @@ QPixmap MainWindow::loadWithOpacity(const QString &path, qreal opacity, const QS
 }
 
 void MainWindow::mapInit(){
+    wPressed = aPressed = sPressed = dPressed = false;
+    upPressed = downPressed = leftPressed = rightPressed = false;
+
+    noSolution = false;
+    canMatch = false;
+
     //加载最好成绩
     QSettings settings("local.txt", QSettings::IniFormat);//随程序发布统一配置
     settings.sync();
@@ -547,6 +553,14 @@ void MainWindow::mapInit(){
     if(numTypes > maxNum){//保护防止过度设置种类
         numTypes = maxNum;
     }
+
+    //计时器初始化
+    if(!characterSet){
+        timerMagnification = 0.8 + 0.1 * numTypes;
+    }else{
+        timerMagnification = 1.8 + 0.1 * numTypes;
+    }
+    remainingTime = static_cast<int>(row * col * timerMagnification);
 
     //初始化地图与选中逻辑
     backgroundNum  = std::rand() % 6;
